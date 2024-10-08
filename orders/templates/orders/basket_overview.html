@@ -1,0 +1,47 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container">
+
+<h2>Basket Overview</h2>
+
+
+<div class="container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Order Position</th>
+                <th>Product ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for position in order.order_positions %}
+                <tr>
+                    <td>{{ position.pos }}</td>
+                    <td>{{ position.product.id }}</td>
+                    <td>{{ position.product.name }}</td>
+                    <td>{{ position.product.description }}</td>
+                    <td>{{ position.quantity }}</td>
+                    <td>{{ position.price }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if user.is_authenticated %}
+    <div class="order-total">
+        <h3>Order Total: ${{ order.total_price }}</h3>
+    </div>
+    <form method="POST" action="{% url 'orders:place_order' %}">
+        {% csrf_token %}
+        <button type="submit">Place Order</button>
+    </form>
+{% else %}
+    <p>Please <a href="{% url 'admin:login' %}?next={% url 'orders:basket_overview' %}">log in</a> to place an order.</p>
+{% endif %}
+</div>
+{% endblock %}

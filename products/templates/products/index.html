@@ -1,0 +1,39 @@
+{% extends 'core/base.html' %}
+
+{% load products_tags %}
+
+{% block content %}
+<div class="container">
+  {% additional_product_header%}
+  <h2>List of Products</h2>
+
+    {% if products_list %}
+        <div class="table-responsive">
+        <table class="table table-hover table-bordered">
+	            <thead>
+	                <tr >
+	                    <th scope="col">Id</th>
+	                    <th scope="col">Name</th>
+	                    <th scope="col">Description</th>
+	                    <th scope="col">Price</th>
+                        <th scope="col"></th>
+	                </tr>
+	            </thead>
+        <tbody>
+        {% for product in products_list %}
+            <tr>
+                <td>{{ product.id }}</td>
+                <td>{{ product.name }}</td>
+                <td>{{ product.description }}</td>
+                <td>{{ product.price }}</td>
+                <td>{% additional_product_functionality product %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p>No products are available.</p>
+    {% endif %}
+</div>
+{% endblock %}

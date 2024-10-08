@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  database:
+    image: mariadb:11-jammy
+      #restart: always
+    # would be better to have a local folder where the database files are persisted
+    #volumes:
+    #- ./database-data:/var/lib/mysql
+    networks:
+      - backend
+    environment:
+      - MYSQL_DATABASE=django-demo
+      - MYSQL_ROOT_PASSWORD=root-password
+    healthcheck:
+      test: ["CMD", "mariadb", "--user=root", "--password=root-password", "--execute", "use", "django-demo"]
+      interval: 2s
+      timeout: 10s
+      retries: 3
+      start_period: 2s
+  
+  app:
+      build:
+        context: .
+        dockerfile: ./Dockerfile
+      image: django-demo
+        #restart:
+        #always
+      networks:
+        - backend
+        - frontend
+      ports:
+        - "8000:8000"
+      depends_on:
+        database:
+          condition: service_healthy
+            #restart: true
+             
+networks:
+  backend:
+  frontend:
