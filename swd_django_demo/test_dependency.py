@@ -39,3 +39,11 @@ class TestDependencyContainer(TestCase):
     def test_trading_service(self):
         trading_service = self.container.trading_service();
         self.assertIsNotNone(trading_service)
+
+    def test_customerImp_service(self):
+        customer_service = self.container.customer_service();
+        self.assertIsNotNone(customer_service)
+
+    def test_admin_service(self):
+        admin_service = self.container.admin_service();
+        self.assertIsNotNone(admin_service)

@@ -70,7 +70,7 @@ class ICustomerService(ABC):
         pass
 
 
-class UserService(ABC):
+class IUserService(ABC):
     @abstractmethod
     def login(self):
         pass
@@ -79,7 +79,7 @@ class UserService(ABC):
     def get_user_info(self):
         pass
 
-class TransactionService(ABC):
+class ITransactionService(ABC):
     @abstractmethod
     def create_transaction(self):
         pass

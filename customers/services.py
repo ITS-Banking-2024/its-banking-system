@@ -1,8 +1,7 @@
-import time
-
+from dependency_injector.wiring import inject, Provide
 from django.db import models, transaction
 
-from core.services import ICustomerService
+from core.services import ICustomerService, IUserService
 from customers.models import Customer
 
 
@@ -49,3 +48,39 @@ class CustomerService(ICustomerService):
             return Customer.objects.get(username=username)
         except Customer.DoesNotExist:
             return None
+
+class AdminServiceImpl(IUserService):
+    def login(self):
+        pass
+
+    def get_user_info(self):
+        pass
+
+    def create_user(self):
+        pass
+
+    def update_user(self):
+        pass
+
+    def delete_user(self):
+        pass
+
+    def check_user_balance(self, user_id):
+        pass
+
+
+class CustomerServiceImpl(IUserService):
+    @inject
+    def __init__(self, banking_service: Provide("banking_service"), trading_service: Provide("trading_service")):
+        self.banking_service = banking_service
+        self.trading_service = trading_service
+
+    def login(self):
+        pass
+
+    def get_user_info(self):
+        pass
+
+    def check_balance(self):
+        self.banking_service.check_balance()
+        pass

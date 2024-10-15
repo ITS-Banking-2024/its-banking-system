@@ -1,6 +1,6 @@
-from core.services import TransactionService
+from core.services import ITransactionService
 
-class BankingServiceImpl(TransactionService):
+class BankingServiceImplI(ITransactionService):
     def create_transaction(self):
         pass
 
@@ -16,7 +16,7 @@ class BankingServiceImpl(TransactionService):
     def update_balance(self):
         pass
 
-class TradingServiceImpl(TransactionService):
+class TradingServiceImplI(ITransactionService):
     def create_transaction(self):
         pass
 
