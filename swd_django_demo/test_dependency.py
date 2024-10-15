@@ -31,3 +31,11 @@ class TestDependencyContainer(TestCase):
         self.assertIsNotNone(order_service.product_service)
         # check that order_service has a customer_service
         self.assertIsNotNone(order_service.customer_service)
+
+    def test_banking_service(self):
+        banking_service = self.container.banking_service();
+        self.assertIsNotNone(banking_service)
+
+    def test_trading_service(self):
+        trading_service = self.container.trading_service();
+        self.assertIsNotNone(trading_service)

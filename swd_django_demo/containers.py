@@ -12,6 +12,8 @@ from customers.services import CustomerService
 from orders.services import OrderService
 from products.models import Product
 from products.services import ProductService
+from transactions.services import BankingServiceImpl, TradingServiceImpl
+
 
 
 # define a container class and declare its dependencies
@@ -34,4 +36,12 @@ class Container(containers.DeclarativeContainer):
     # Singleton provider for OrderService with product_service as a dependency
     order_service = providers.Singleton(
         OrderService, product_service=product_service, customer_service=customer_service
+    )
+
+    banking_service = providers.Singleton(
+        BankingServiceImpl,
+    )
+
+    trading_service = providers.Singleton(
+        TradingServiceImpl,
     )
