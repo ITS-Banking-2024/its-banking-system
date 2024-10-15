@@ -68,3 +68,34 @@ class ICustomerService(ABC):
     @abstractmethod
     def get_by_username(self, username: str) -> models.QuerySet:
         pass
+
+
+class IUserService(ABC):
+    @abstractmethod
+    def login(self):
+        pass
+
+    @abstractmethod
+    def get_user_info(self):
+        pass
+
+class ITransactionService(ABC):
+    @abstractmethod
+    def create_transaction(self):
+        pass
+
+    @abstractmethod
+    def update_transaction(self):
+        pass
+
+    @abstractmethod
+    def delete_transaction(self):
+        pass
+
+    @abstractmethod
+    def check_balance(self):
+        pass
+
+    @abstractmethod
+    def update_balance(self):
+        pass

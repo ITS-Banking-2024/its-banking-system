@@ -20,6 +20,20 @@ class CustomerBase(Customer):
 
 
 # this is the concrete model that we will use for the project
+
+"""
+id
+PIN
+name
+surname
+email
+dob
+checkingBalance
+hasSavings
+savingsBalance
+hasTrading
+stockList
+"""
 class Customer(CustomerBase):
     class Meta:
         db_table: str = "customer_concrete"
