@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'customers.apps.CustomersConfig',
     'products.apps.ProductsConfig',
+    'accounts.apps.AccountsConfig',
 #    'product_alternative.apps.ProductAlternativeConfig',
     'orders.apps.OrdersConfig',
     'transactions.apps.TransactionsConfig',
@@ -194,4 +195,6 @@ PRODUCT_MODEL = "products.ProductBase"
 
 # Set the model to use for customers
 CUSTOMER_MODEL = "customers.CustomerBase"
+
+ACCOUNT_MODEL = "accounts.AccountBase"
 
