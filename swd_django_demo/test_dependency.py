@@ -41,8 +41,9 @@ class TestDependencyContainer(TestCase):
         self.assertIsNotNone(trading_service)
 
     def test_customerImp_service(self):
-        customer_service = self.container.customer_service();
-        self.assertIsNotNone(customer_service)
+        customerImplService = self.container.customerImpl_service();
+        self.assertIsNotNone(customerImplService)
+        self.assertIsNotNone(customerImplService.banking_service)
 
     def test_admin_service(self):
         admin_service = self.container.admin_service();
