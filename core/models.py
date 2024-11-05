@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+import uuid
 
 from core.managers import CoreProductManager
 
@@ -40,3 +41,22 @@ class Customer(AbstractUser):
 
     def __str__(self) -> str:
         return self.username
+
+class User(AbstractUser):
+    user_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    address = models.CharField(max_length=255)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self) -> str:
+        return f'{self.user_id}, {self.first_name}, {self.last_name}'
+
+
+class Account(models.Model):
+    account_id = models.CharField(max_length=20, unique=True)
+    balance = models.DecimalField(max_digits=10, decimal_places=2)
+    user_id = models.ForeignKey(User, related_name='accounts', on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
