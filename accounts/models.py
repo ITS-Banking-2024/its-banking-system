@@ -1,12 +1,20 @@
 from django.db import models
 
 from core.models import Account
+from customers.models import Customer
+
 
 class AccountBase(Account):
+
+    user_id = models.ForeignKey(Customer, related_name='accounts', on_delete=models.CASCADE, null=True, blank=True)
+
     class Meta:
         # swappable is used to be able to change the product model
         swappable: str = "ACCOUNT_MODEL"
         db_table: str = "account_base"
+
+    def __str__(self):
+        return f"Account {self.account_id} with balance {self.balance}"
 
 class CheckingAccount(AccountBase):
     class Meta:
