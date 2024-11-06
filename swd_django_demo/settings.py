@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'customers.apps.CustomersConfig',
     'products.apps.ProductsConfig',
     'accounts.apps.AccountsConfig',
-    'users.apps.UsersConfig',
 #    'product_alternative.apps.ProductAlternativeConfig',
     'orders.apps.OrdersConfig',
     'transactions.apps.TransactionsConfig',
@@ -199,5 +198,4 @@ CUSTOMER_MODEL = "customers.CustomerBase"
 
 ACCOUNT_MODEL = "accounts.AccountBase"
 
-USER_MODEL = "users.UserBase"
 

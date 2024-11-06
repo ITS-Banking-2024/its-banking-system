@@ -48,17 +48,6 @@ class Customer(AbstractUser):
         return f'{self.user_id}, {self.first_name}, {self.last_name}'
 
 
-class User(models.Model):
-    user_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    address = models.CharField(max_length=255)
-
-    class Meta:
-        abstract = True
-
-    def __str__(self) -> str:
-        return f'{self.user_id}'
-#, {self.first_name}, {self.last_name}')
-
 
 class Account(models.Model):
     account_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
