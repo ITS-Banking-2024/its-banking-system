@@ -1,7 +1,7 @@
 from django.db import models
 
 from core.models import Account
-from customers.models import Customer
+from accounts.settings import ACCOUNT_MODEL
 
 
 class AccountBase(Account):
