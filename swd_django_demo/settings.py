@@ -198,4 +198,6 @@ CUSTOMER_MODEL = "customers.CustomerBase"
 
 ACCOUNT_MODEL = "accounts.AccountBase"
 
+TRANSACTION_MODEL = "transactions.TransactionBase"
+
 
