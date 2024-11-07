@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 #    'product_alternative.apps.ProductAlternativeConfig',
     'orders.apps.OrdersConfig',
     'transactions.apps.TransactionsConfig',
+    'stock_trading.apps.StockTradingConfig',
 ]
 
 # Middleware classes used in request-response processing

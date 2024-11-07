@@ -73,3 +73,6 @@ class Stock(models.Model):
     stockID = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     stock_name = models.CharField(max_length=200)
     current_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        abstract = True

@@ -60,7 +60,7 @@ class StockTransaction(TransactionBase):
         null=True,
         blank=True
     )
-    stockId = models.ForeignKey('core.Stock', on_delete=models.CASCADE)
+    stockId = models.ForeignKey('stock_trading.Stock', on_delete=models.CASCADE)
     quantity = models.IntegerField()
     transaction_type = models.CharField(max_length=4, choices=[('buy', 'Buy'), ('sell', 'Sell')])
 
