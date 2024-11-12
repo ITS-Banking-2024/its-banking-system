@@ -1,10 +1,13 @@
 from django.db import models
 
 from core.models import Account
+from accounts.managers import AccountManager
 from accounts.settings import CUSTOMER_MODEL
 
 
 class AccountBase(Account):
+
+    objects : AccountManager = AccountManager()
 
     user_id = models.ForeignKey(CUSTOMER_MODEL, related_name='accounts', on_delete=models.CASCADE, null=True, blank=True)
 

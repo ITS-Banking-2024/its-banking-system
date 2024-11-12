@@ -4,10 +4,11 @@ from typing import List
 from django.db import models
 
 from core.models import Product
+from core.models import Account
 
 """
-In this code, we are defining the interfaces for the services. 
-Interfaces are abstract classes that declare a set of methods that must be implemented 
+In this code, we are defining the interfaces for the services.
+Interfaces are abstract classes that declare a set of methods that must be implemented
 by any concrete class that implements the interface.
 """
 
@@ -81,21 +82,36 @@ class IUserService(ABC):
 
 class ITransactionService(ABC):
     @abstractmethod
-    def create_transaction(self):
+    def create_transaction(self, sending_account: Account, receiving_account: Account, amount: float):
         pass
 
     @abstractmethod
-    def update_transaction(self):
+    def update_transaction(self, transaction_id: int, amount: float):
         pass
 
     @abstractmethod
-    def delete_transaction(self):
+    def delete_transaction(self, transaction_id: int):
+        pass
+
+    # here propably we can use account service to invoke the check_balance method
+    @abstractmethod
+    def check_balance(self, account: Account):
         pass
 
     @abstractmethod
-    def check_balance(self):
+    def update_balance(self, sending_account: Account, receiving_account: Account, amount: float):
+        pass
+
+
+class IAccountService(ABC):
+    @abstractmethod
+    def get_all_accounts(self) -> List[Product]:
         pass
 
     @abstractmethod
-    def update_balance(self):
+    def get_account_balance(self, account: Account) -> float:
+        pass
+
+    @abstractmethod
+    def get_by_id(self, id: int) -> models.QuerySet:
         pass

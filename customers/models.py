@@ -1,6 +1,7 @@
 # Create your models here.
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from customers.managers import CustomerManager
 
 from core.models import Customer
 
@@ -8,11 +9,14 @@ from core.models import Customer
     we are using the Customer model for authentication, so we need to use the AbstractUser model
     for this project, only add nullable fields to the customer,
     otherwise you could run into trouble with creating suerpusers.
-    
+
 """
 
 
 class CustomerBase(Customer):
+
+    objects: CustomerManager = CustomerManager()
+
     class Meta:
         # swappable is used to swap out the default user model with our custom user model
         swappable: str = "CUSTOMER_MODEL"
