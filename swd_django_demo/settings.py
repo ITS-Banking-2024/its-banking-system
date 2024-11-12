@@ -198,6 +198,8 @@ PRODUCT_MODEL = "products.ProductBase"
 # Set the model to use for customers
 CUSTOMER_MODEL = "customers.CustomerBase"
 
+CONCRETE_CUSTOMER_MODEL = "customers.Customer"
+
 ACCOUNT_MODEL = "accounts.AccountBase"
 
 TRANSACTION_MODEL = "transactions.TransactionBase"

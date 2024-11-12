@@ -1,12 +1,17 @@
 from django.test import TestCase
+from django.apps import apps
 from accounts.models import AccountBase, CheckingAccount, SavingsAccount, CustodyAccount
-from customers.models import Customer
+from accounts.settings import CONCRETE_CUSTOMER_MODEL as CUSTOMER_MODEL
 
 # Create your tests here.
 
 
 class TestAccounts(TestCase):
     def setUp(self) -> None:
+
+        # Get the Customer model
+        Customer = apps.get_model(CUSTOMER_MODEL)
+
         self.customer = Customer.objects.create(username="testuser", credit=1000.00)
 
     def test_new_checking_account(self) -> None:
