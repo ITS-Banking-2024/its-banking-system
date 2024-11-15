@@ -41,10 +41,11 @@ INSTALLED_APPS = [
     'customers.apps.CustomersConfig',
     'products.apps.ProductsConfig',
     'accounts.apps.AccountsConfig',
-    'users.apps.UsersConfig',
 #    'product_alternative.apps.ProductAlternativeConfig',
     'orders.apps.OrdersConfig',
     'transactions.apps.TransactionsConfig',
+    'stock_trading.apps.StockTradingConfig',
+    'online_banking.apps.OnlineBankingConfig',
 ]
 
 # Middleware classes used in request-response processing
@@ -197,7 +198,10 @@ PRODUCT_MODEL = "products.ProductBase"
 # Set the model to use for customers
 CUSTOMER_MODEL = "customers.CustomerBase"
 
+CONCRETE_CUSTOMER_MODEL = "customers.Customer"
+
 ACCOUNT_MODEL = "accounts.AccountBase"
 
-USER_MODEL = "users.UserBase"
+TRANSACTION_MODEL = "transactions.TransactionBase"
+
 

@@ -1,12 +1,15 @@
 from django.db import models
 
 from core.models import Account
-from accounts.settings import ACCOUNT_MODEL
+from accounts.managers import AccountManager
+from accounts.settings import CUSTOMER_MODEL
 
 
 class AccountBase(Account):
 
-    user_id = models.ForeignKey(Customer, related_name='accounts', on_delete=models.CASCADE, null=True, blank=True)
+    objects : AccountManager = AccountManager()
+
+    user_id = models.ForeignKey(CUSTOMER_MODEL, related_name='accounts', on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         # swappable is used to be able to change the product model
