@@ -37,6 +37,7 @@
             </tbody>
         </table>
     </div>
+        <a href="{% url 'customers:dashboard' %}" class="btn btn-secondary">Back to Customer Dashboard</a>
     {% else %}
     <p>No transaction history.</p>
     {% endif %}
