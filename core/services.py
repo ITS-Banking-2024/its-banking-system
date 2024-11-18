@@ -144,7 +144,7 @@ class ITransactionService(ABC):
         pass
 
     @abstractmethod
-    def get_transaction_history(self, account_id: UUID) -> List[dict]:
+    def get_transaction_history(self, account_id: UUID, timeframe: str) -> List[dict]:
         pass
 
 

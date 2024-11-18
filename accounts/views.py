@@ -1,3 +1,5 @@
+from lib2to3.fixes.fix_input import context
+
 from django.http import HttpRequest, HttpResponse, Http404
 from accounts.models import Account, CheckingAccount, SavingsAccount, CustodyAccount
 
@@ -52,10 +54,20 @@ def new_transaction(request: HttpRequest, account_id, transaction_service: ITran
 
     return render(request, "accounts/new_transaction.html", {"form": form, "account_id": account_id})
 
-def history(request: HttpRequest, account_id):
+@inject
+def history(request: HttpRequest, account_id, transaction_service: ITransactionService = Provide["transaction_service"], account_service: IAccountService = Provide["account_service"]):
+    timeframe = request.GET.get("timeframe", "all_time")
+
     account = (
             CheckingAccount.objects.filter(account_id=account_id).first()
             or SavingsAccount.objects.filter(account_id=account_id).first()
             or CustodyAccount.objects.filter(account_id=account_id).first()
     )
-    return render(request, 'accounts/account_details.html', {'account': account})
+    if not account:
+        raise Http404("Account not found.")
+
+    transaction_history = transaction_service.get_transaction_history(account_id, timeframe)
+
+    context = {'account': account, 'transaction_history': transaction_history, 'selected_timeframe': timeframe}
+
+    return render(request, 'accounts/transaction_history.html', context)

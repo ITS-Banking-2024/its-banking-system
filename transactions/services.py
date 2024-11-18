@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from dependency_injector.wiring import Provide
@@ -31,8 +31,42 @@ class TransactionService(ITransactionService):
     def update_balance(self, sending_account: Account, receiving_account: Account, amount: float):
         pass
 
-    def get_transaction_history(self, account_id: UUID) -> List[dict]:
-        pass
+    def get_transaction_history(self, account_id: UUID, timeframe: str) -> List[dict]:
+        """
+                Fetch transactions based on account_id and timeframe.
+
+                :param account_id: UUID of the account whose transactions are to be fetched.
+                :param timeframe: Filter transactions by timeframe ('30_days', '60_days', or 'all_time').
+                :return: A list of dictionaries containing transaction details.
+        """
+
+        if timeframe == "30_days":
+            start_date = datetime.now() - timedelta(days=30)
+        elif timeframe == "60_days":
+            start_date = datetime.now() - timedelta(days=60)
+        else:
+            start_date = None
+
+        if start_date:
+            transactions = Transaction.objects.filter(
+                sending_account_id=account_id,
+                date__gte=start_date
+            )
+        else:
+            transactions = Transaction.objects.filter(sending_account_id=account_id)
+
+        transaction_history = [
+            {
+                "transaction_id": transaction.id,
+                "sending_account_id": str(transaction.sending_account_id),
+                "receiving_account_id": str(transaction.receiving_account_id),
+                "amount": float(transaction.amount),
+                "date": transaction.date.strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            for transaction in transactions
+        ]
+
+        return transaction_history
 
     def create_new_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
         # Wrap the operation in a transaction for safety

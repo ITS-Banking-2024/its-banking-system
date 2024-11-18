@@ -29,7 +29,7 @@
     <p>No accounts are available.</p>
     {% endif %}
     {% else %}
-    <d>Please <a href="{% url 'customers:customers_login' %}?next={% url 'customers:dashboard' %}">log in</a>
-        {% endif %}
+    <div>Please <a href="{% url 'customers:customers_login' %}?next={% url 'customers:dashboard' %}">log in</a></div>
+    {% endif %}
 </div>
 {% endblock %}
