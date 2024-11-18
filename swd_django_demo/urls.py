@@ -30,6 +30,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("customers/", include("customers.urls")),
     path("logout/", customers_login, name="logout"),
+
+    path('accounts/', include('accounts.urls', namespace='accounts')),
 ]
 
 # Serve static files in development
