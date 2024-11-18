@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import path, include
+from django.contrib.auth import views as auth_views
+from customers.views import customers_login
 
 # Map URLs to views
 urlpatterns = [
@@ -26,6 +28,8 @@ urlpatterns = [
     path("products/", include("products.urls")),
     # Map the "admin/" URL to the Django admin site
     path('admin/', admin.site.urls),
+    path("customers/", include("customers.urls")),
+    path("logout/", customers_login, name="logout"),
 ]
 
 # Serve static files in development

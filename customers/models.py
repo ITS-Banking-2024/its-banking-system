@@ -23,6 +23,7 @@ class CustomerBase(Customer):
         db_table: str = "customer_base"
 
 
+
 # this is the concrete model that we will use for the project
 
 """

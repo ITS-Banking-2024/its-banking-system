@@ -1,0 +1,35 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container">
+
+    {% if user.is_authenticated %}
+    <h2>List of accounts</h2>
+
+    {% if customer_accounts %}
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">Account Id</th>
+                    <th scope="col">Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in customer_accounts %}
+                <tr>
+                    <td>{{ account.account_id }}</td>
+                    <td>{{ account.type }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>No accounts are available.</p>
+    {% endif %}
+    {% else %}
+    <d>Please <a href="{% url 'customers:customers_login' %}?next={% url 'customers:dashboard' %}">log in</a>
+        {% endif %}
+</div>
+{% endblock %}

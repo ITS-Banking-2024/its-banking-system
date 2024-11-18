@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'transactions.apps.TransactionsConfig',
     'stock_trading.apps.StockTradingConfig',
     'online_banking.apps.OnlineBankingConfig',
-    'django_extensions',
 ]
 
 # Middleware classes used in request-response processing
@@ -204,5 +203,9 @@ CONCRETE_CUSTOMER_MODEL = "customers.Customer"
 ACCOUNT_MODEL = "accounts.AccountBase"
 
 TRANSACTION_MODEL = "transactions.TransactionBase"
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 

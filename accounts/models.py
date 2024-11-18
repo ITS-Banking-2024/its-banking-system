@@ -10,6 +10,8 @@ class AccountBase(Account):
     objects : AccountManager = AccountManager()
 
     user_id = models.ForeignKey(CUSTOMER_MODEL, related_name='accounts', on_delete=models.CASCADE, null=True, blank=True)
+    opening_balance = models.FloatField(default=0.0)
+    type : str = models.CharField(max_length=50, null=False, default='checking', choices=[('checking', 'Checking'), ('savings', 'Savings'), ('custody', 'Custody')])
 
     class Meta:
         # swappable is used to be able to change the product model
@@ -23,7 +25,7 @@ class CheckingAccount(AccountBase):
     class Meta:
         db_table: str = "account_checking"
 
-    is_overdraft_allowed = models.BooleanField(default=True)
+    PIN : str = models.CharField(max_length=4, null=False)
 
 
 class SavingsAccount(AccountBase):
