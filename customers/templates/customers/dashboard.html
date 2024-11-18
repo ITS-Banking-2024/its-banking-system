@@ -17,7 +17,7 @@
             </thead>
             <tbody>
                 {% for account in customer_accounts %}
-                <tr>
+                <tr onclick="window.location.href='{% url 'accounts:account_detail' account.account_id %}'" style="cursor: pointer;">
                     <td>{{ account.account_id }}</td>
                     <td>{{ account.type }}</td>
                 </tr>

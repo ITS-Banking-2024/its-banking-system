@@ -20,7 +20,7 @@ def dashboard(request: HttpRequest,
               customer_service: ICustomerService = Provide["customer_service"],):
 
     if not request.user.is_authenticated:
-        return redirect("customers_login")
+        return redirect("customers:customers_login")
 
     template = loader.get_template("customers/dashboard.html")
 

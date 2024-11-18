@@ -12,9 +12,9 @@ def index(request: HttpRequest,
           product_service: IProductService = Provide["product_service"], ):
     # get all products from the product service (note that we are not using a concrete product service, but an interface
     products_list = product_service.get_all_products()
-    # load the template and render it with the products list
+    # load the templates and render it with the products list
     template = loader.get_template("products/index.html")
-    # the context is a dictionary that is used to pass data to the template
+    # the context is a dictionary that is used to pass data to the templates
     context = {
         "products_list": products_list,
     }
