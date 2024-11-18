@@ -40,14 +40,14 @@ the core functionality of the built-in user model.
 
 
 class Customer(AbstractUser):
-    user_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    customer_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     address = models.CharField(max_length=255, null=True)
 
     class Meta:
         abstract = True
 
     def __str__(self) -> str:
-        return f'{self.user_id}, {self.first_name}, {self.last_name}'
+        return f'{self.customer_id}, {self.first_name}, {self.last_name}'
 
 
 

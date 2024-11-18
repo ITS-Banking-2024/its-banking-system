@@ -79,7 +79,7 @@ class TestAccounts(TestCase):
             is_overdraft_allowed=True
         )
 
-        # Retrieve accounts by user_id
+        # Retrieve accounts by customer_id
         retrieved_accounts = CheckingAccount.objects.get_by_user_id(self.customer)
 
         # Assert that retrieved accounts are not None and contain the created checking_account
@@ -100,7 +100,7 @@ class TestAccounts(TestCase):
             is_overdraft_allowed=True
         )
 
-        # Retrieve accounts by user_id
+        # Retrieve accounts by customer_id
         retrieved_accounts = CheckingAccount.objects.get_by_user_id(self.customer)
 
         # Assert that retrieved accounts are not None and contain the created checking_accounts

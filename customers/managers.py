@@ -3,15 +3,37 @@ from django.db.models import QuerySet
 from core.managers import CoreProductManager
 from core.models import Customer
 
-class CustomerManager(CoreProductManager):
+from django.contrib.auth.base_user import BaseUserManager
+
+
+class CustomerManager(BaseUserManager):
+
+    def create_user(self, email, password, **extra_fields):
+        if not email:
+            raise ValueError('Email for user must be set.')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save()
+        return user
+
+    def create_superuser(self, email, password, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+        return self.create_user(email, password, **extra_fields)
 
     def get_by_user_id(self, user_id: Union[int, str]) -> Optional[Customer]:
-        # Query for Customer object by user_id (UUID or int)
+        # Query for Customer object by customer_id (UUID or int)
         qs = self.get_queryset().filter(user_id=user_id)
         return qs.first() if qs.exists() else None
 
     def delete_customer(self, user_id: Union[int, str]) -> None:
-        # Delete a Customer object by user_id (UUID or int)
+        # Delete a Customer object by customer_id (UUID or int)
         self.get_queryset().filter(user_id=user_id).delete()
 
     def get_all_customers(self) -> QuerySet:

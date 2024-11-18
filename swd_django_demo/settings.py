@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'transactions.apps.TransactionsConfig',
     'stock_trading.apps.StockTradingConfig',
     'online_banking.apps.OnlineBankingConfig',
+    'django_extensions',
 ]
 
 # Middleware classes used in request-response processing

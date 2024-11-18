@@ -13,7 +13,7 @@ class AccountManager(Manager):
 
 
     def get_by_user_id(self, user_id: Union[int, str]) -> QuerySet:
-    # Query for all Account objects by user_id (UUID or int)
+    # Query for all Account objects by customer_id (UUID or int)
         return self.get_queryset().filter(user_id=user_id)
 
 
