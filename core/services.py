@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
+from uuid import UUID
+from datetime import datetime
 
 from django.db import models
 
@@ -53,7 +55,29 @@ class IOrderService(ABC):
         pass
 
 
+class IAccountService(ABC):
+    @abstractmethod
+    def get_all_accounts(self) -> List[Account]:
+        pass
+
+    @abstractmethod
+    def get_account_balance(self, account: Account) -> float:
+        pass
+
+    @abstractmethod
+    def get_accounts_by_customer_id(self, customer_id: UUID) -> List[Account]:
+        pass
+
+    @abstractmethod
+    def get_balance(self, account_id: UUID) -> float:
+        pass
+
+
 class ICustomerService(ABC):
+    @abstractmethod
+    def __init__(self, account_service: IAccountService):
+        pass
+
     @abstractmethod
     def has_credit(self, customer) -> bool:
         pass
@@ -69,6 +93,15 @@ class ICustomerService(ABC):
     @abstractmethod
     def get_by_username(self, username: str) -> models.QuerySet:
         pass
+
+    @abstractmethod
+    def get_customer_accounts(self, customer_id: UUID) -> List[Account]:
+        pass
+
+    @abstractmethod
+    def get_customer_balance(self, customer_id: UUID) -> float:
+        pass
+
 
 
 class IUserService(ABC):
@@ -102,16 +135,37 @@ class ITransactionService(ABC):
     def update_balance(self, sending_account: Account, receiving_account: Account, amount: float):
         pass
 
-
-class IAccountService(ABC):
     @abstractmethod
-    def get_all_accounts(self) -> List[Product]:
+    def create_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID, date: datetime) -> bool:
         pass
 
     @abstractmethod
-    def get_account_balance(self, account: Account) -> float:
+    def get_transaction_history(self, account_id: UUID) -> List[dict]:
+        pass
+
+
+# Interface for Trading Service
+class ITradingService(ABC):
+
+    @abstractmethod
+    def buy_stock(self, account_id: UUID, stock_id: UUID, quantity: int) -> bool:
         pass
 
     @abstractmethod
-    def get_by_id(self, id: int) -> models.QuerySet:
+    def sell_stock(self, account_id: UUID, stock_id: UUID, quantity: int) -> bool:
+        pass
+
+    @abstractmethod
+    def get_current_stock_price(self, stock_id: UUID) -> float:
+        pass
+
+# Interface for Online Banking Service
+class IOnlineBankingService(ABC):
+
+    @abstractmethod
+    def execute_online_transaction(self, transaction_id: UUID) -> bool:
+        pass
+
+    @abstractmethod
+    def create_online_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> UUID:
         pass

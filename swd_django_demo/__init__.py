@@ -37,7 +37,8 @@ def wait_for_ready_event(ready_event: threading.Event) -> None:
         # allowing them to use the dependencies that they need without having to manually create them.
         container.wire(modules=["orders.views",
                                 "products.views",
-                                "orders.dtos", ])
+                                "orders.dtos",
+                                "customers.views", ])
 
     except Exception as e:
         _thread.interrupt_main()

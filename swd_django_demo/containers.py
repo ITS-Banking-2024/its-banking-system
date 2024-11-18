@@ -14,6 +14,8 @@ from products.models import Product
 from products.services import ProductService
 from transactions.services import BankingServiceImplI, TradingServiceImplI
 from customers.services import CustomerServiceImpl, AdminServiceImpl
+from accounts.services import AccountService
+from accounts.models import Account
 
 
 
@@ -27,17 +29,8 @@ class Container(containers.DeclarativeContainer):
         ProductService,
     )
 
-    customer_service = providers.Singleton(
-        CustomerService,
-    )
-
     # Factory provider for creating instances of Product model
     product_factory = providers.Factory(Product, id=int, name=str, description=str )
-
-    # Singleton provider for OrderService with product_service as a dependency
-    order_service = providers.Singleton(
-        OrderService, product_service=product_service, customer_service=customer_service
-    )
 
 
     banking_service = providers.Singleton(
@@ -48,10 +41,18 @@ class Container(containers.DeclarativeContainer):
         TradingServiceImplI,
     )
 
-    customerImpl_service = providers.Singleton(
-        CustomerServiceImpl,
-        banking_service = banking_service,
-        trading_service = trading_service,
+    account_service = providers.Singleton(
+        AccountService,
+    )
+
+    customer_service = providers.Singleton(
+        CustomerService,
+        account_service=account_service
+    )
+
+    # Singleton provider for OrderService with product_service as a dependency
+    order_service = providers.Singleton(
+        OrderService, product_service=product_service, customer_service=customer_service
     )
 
     admin_service = providers.Singleton(

@@ -1,5 +1,9 @@
 from dependency_injector.wiring import inject, Provide
 from django.db import models, transaction
+from typing import List
+from uuid import UUID
+from core.models import Account
+
 
 from core.services import ICustomerService, IUserService
 from customers.models import Customer
@@ -9,6 +13,10 @@ class CustomerService(ICustomerService):
     """
         Implementation of the ICustomerService interface for checking if a customer has any credit or not.
     """
+
+    @inject
+    def __init__(self, account_service: Provide("account_service")):
+        self.account_service = account_service
 
     def has_credit(self, customer: Customer) -> bool:
         return customer.credit > 0
@@ -48,6 +56,14 @@ class CustomerService(ICustomerService):
             return Customer.objects.get(username=username)
         except Customer.DoesNotExist:
             return None
+
+    def get_customer_accounts(self, customer_id: UUID) -> List[Account]:
+        return self.account_service.get_accounts_by_customer_id(customer_id)
+
+    def get_customer_balance(self, customer_id: UUID) -> float:
+        pass
+
+
 
 class AdminServiceImpl(IUserService):
     def login(self):
