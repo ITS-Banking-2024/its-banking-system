@@ -19,7 +19,7 @@
         </tr>
         <!-- Add more fields as required -->
     </table>
-        <a href="{% url 'customers:dashboard' %}" class="btn btn-primary">Back to Customer Dashboard</a>
+    <a href="{% url 'accounts:new_transaction' account.account_id %}" class="btn btn-primary">New Transaction</a>
     <a href="{% url 'customers:dashboard' %}" class="btn btn-primary">Back to Customer Dashboard</a>
     {% else %}
     <p>

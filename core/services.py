@@ -72,6 +72,10 @@ class IAccountService(ABC):
     def get_balance(self, account_id: UUID) -> float:
         pass
 
+    @abstractmethod
+    def validate_accounts_for_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
+        pass
+
 
 class ICustomerService(ABC):
     @abstractmethod
@@ -136,7 +140,7 @@ class ITransactionService(ABC):
         pass
 
     @abstractmethod
-    def create_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID, date: datetime) -> bool:
+    def create_new_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
         pass
 
     @abstractmethod

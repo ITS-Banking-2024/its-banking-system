@@ -53,7 +53,7 @@ class IndexTests(TestCase):
 
         # Check that the response is 200 OK.
         self.assertEqual(response.status_code, 200)
-        # check that the correct template was used
+        # check that the correct templates was used
         self.assertTemplateUsed(response, "products/index.html")
         # Check that the rendered context contains the list of products
         self.assertIn('products_list', response.context)

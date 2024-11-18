@@ -1,0 +1,20 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container">
+    {% if user.is_authenticated %}
+    <h2>Create Transaction</h2>
+    <p>Account ID: {{ account_id }}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">Submit</button>
+        <a href="{% url 'accounts:account_detail' account_id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+    {% else %}
+    <p>
+        Please <a href="{% url 'customers:customers_login' %}">log in</a>.
+    </p>
+    {% endif %}
+</div>
+{% endblock %}
