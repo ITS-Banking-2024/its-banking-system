@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SWD Demo Products</title>
+  <title>ITS-BANK</title>
   <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
   <script src="{% static 'js/bootstrap.min.js' %}"></script>
 </head>
@@ -19,7 +19,11 @@
 
       <!-- Right-aligned Logout -->
       <div class="d-flex">
-        <a href="{% url 'logout' %}" class="btn btn-outline-light">Logout</a>
+        <!-- Logout form -->
+        <form method="POST" action="{% url 'customers:customers_logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-light">Logout</button>
+        </form>
       </div>
     </div>
   </nav>

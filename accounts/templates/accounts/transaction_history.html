@@ -40,6 +40,7 @@
         <a href="{% url 'customers:dashboard' %}" class="btn btn-secondary">Back to Customer Dashboard</a>
     {% else %}
     <p>No transaction history.</p>
+        <a href="{% url 'customers:dashboard' %}" class="btn btn-secondary">Back to Customer Dashboard</a>
     {% endif %}
     {% else %}
     <div>Please <a href="{% url 'customers:customers_login' %}?next={% url 'customers:dashboard' %}">log in</a></div>
