@@ -19,7 +19,7 @@ class TestAccounts(TestCase):
         checking_account = CheckingAccount.objects.create(
             user_id=self.customer,
             balance=1000.00,
-            is_overdraft_allowed=True
+            PIN = "1234"
         )
 
         # Verify that the CheckingAccount instance was created and can be retrieved
@@ -33,7 +33,7 @@ class TestAccounts(TestCase):
         checking_account = CheckingAccount.objects.create(
             user_id=self.customer,
             balance=1000.00,
-            is_overdraft_allowed=True
+            PIN = '1234'
         )
 
         # Create a SavingsAccount instance with the reference account
@@ -54,7 +54,7 @@ class TestAccounts(TestCase):
         checking_account = CheckingAccount.objects.create(
             user_id=self.customer,
             balance=1000.00,
-            is_overdraft_allowed=True
+            PIN = '1234'
         )
 
         # Create a CustodyAccount instance with the reference account
@@ -71,13 +71,14 @@ class TestAccounts(TestCase):
         self.assertEqual(retrieved_account.reference_account, checking_account)
 
 
-    def test_find_singl_account_by_user_id(self):
+    def test_find_single_account_by_user_id(self):
         # Create a CheckingAccount instance for the customer
         checking_account = CheckingAccount.objects.create(
             user_id=self.customer,
             balance=1000.00,
-            is_overdraft_allowed=True
+            PIN="1234"
         )
+
 
         # Retrieve accounts by customer_id
         retrieved_accounts = CheckingAccount.objects.get_by_user_id(self.customer)
@@ -92,12 +93,12 @@ class TestAccounts(TestCase):
         checking_account_1 = CheckingAccount.objects.create(
             user_id=self.customer,
             balance=1000.00,
-            is_overdraft_allowed=True
+            PIN = "1234"
         )
         checking_account_2 = CheckingAccount.objects.create(
             user_id=self.customer,
             balance=2000.00,
-            is_overdraft_allowed=True
+            PIN="2345"
         )
 
         # Retrieve accounts by customer_id
@@ -115,7 +116,7 @@ class TestAccounts(TestCase):
         checking_account = CheckingAccount.objects.create(
             user_id=self.customer,
             balance=1000.00,
-            is_overdraft_allowed=True
+            PIN = "1234"
         )
 
         # Delete the checking account
@@ -131,7 +132,7 @@ class TestAccounts(TestCase):
         checking_account = CheckingAccount.objects.create(
             user_id=self.customer,
             balance=1000.00,
-            is_overdraft_allowed=True
+            PIN="1234"
         )
 
         # Create a CustodyAccount instance with the reference account
