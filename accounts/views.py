@@ -34,6 +34,7 @@ def new_transaction(request: HttpRequest, account_id, transaction_service: ITran
     if request.method == "POST":
         form = TransactionForm(request.POST)
         if form.is_valid():
+            success = False
             try:
                 sending_account_id = account_id
                 receiving_account_id = form.cleaned_data["receiving_account_id"]
@@ -41,19 +42,36 @@ def new_transaction(request: HttpRequest, account_id, transaction_service: ITran
 
                 if not account_service.validate_accounts_for_transaction(amount, sending_account_id, receiving_account_id):
                     raise ValidationError(f"Accounts validation failed.")
+
                 # Use the service to create the transaction
                 transaction_service.create_new_transaction(amount, sending_account_id, receiving_account_id)
-
-                messages.success(request, "Transaction created successfully!")
-                return redirect("accounts:account_detail", account_id=sending_account_id)
+                success = True
 
             except ValidationError as e:
-                messages.error(request, str(e))
+                return render(request, 'transactions/success_screen.html', {
+                    "success": success,
+                    "message": str(e),
+                    "account_id": account_id
+                })
+
+            return render(request, 'transactions/success_screen.html', {
+                "success": success,
+                "message": "Transaction created successfully!" if success else "Transaction failed.",
+                "account_id": account_id
+            })
+
     else:
         form = TransactionForm()
 
     return render(request, "accounts/new_transaction.html", {"form": form, "account_id": account_id})
 
+
+def success_screen(request: HttpRequest, success: bool, message: str, account_id):
+    return render(request, 'transactions/success_screen.html', {
+        "success": success,
+        "message": message,
+        "account_id": account_id
+    })
 @inject
 def history(request: HttpRequest, account_id, transaction_service: ITransactionService = Provide["transaction_service"], account_service: IAccountService = Provide["account_service"]):
     timeframe = request.GET.get("timeframe", "all_time")
