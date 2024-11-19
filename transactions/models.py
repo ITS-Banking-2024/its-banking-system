@@ -18,6 +18,10 @@ class TransactionBase(Transaction):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return f"Transaction {self.transaction_id} of amount {self.amount}"
+
+
 
 class Transaction(TransactionBase):
     class Meta:

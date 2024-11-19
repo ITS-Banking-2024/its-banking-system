@@ -75,6 +75,8 @@ def success_screen(request: HttpRequest, success: bool, message: str, account_id
 @inject
 def history(request: HttpRequest, account_id, transaction_service: ITransactionService = Provide["transaction_service"], account_service: IAccountService = Provide["account_service"]):
     timeframe = request.GET.get("timeframe", "all_time")
+    total_received = 0
+    total_sent = 0
 
     account = (
             CheckingAccount.objects.filter(account_id=account_id).first()
@@ -86,6 +88,14 @@ def history(request: HttpRequest, account_id, transaction_service: ITransactionS
 
     transaction_history = transaction_service.get_transaction_history(account_id, timeframe)
 
-    context = {'account': account, 'transaction_history': transaction_history, 'selected_timeframe': timeframe}
+    for transaction in transaction_history:
+        if str(transaction["sending_account_id"]) == str(account.account_id):
+            total_sent += transaction["amount"]
+        elif str(transaction["receiving_account_id"]) == str(account.account_id):
+            total_received += transaction["amount"]
+        else:
+            raise ValidationError(f"Rouge transaction.")
+
+    context = {'account': account, 'transaction_history': transaction_history, 'selected_timeframe': timeframe, 'total_received': total_received, 'total_sent': total_sent}
 
     return render(request, 'accounts/transaction_history.html', context)

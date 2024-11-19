@@ -1,7 +1,7 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-<div class="container">
+<div class="container mb-5">
     {% if user.is_authenticated %}
     <h2>Transaction History</h2>
     <p>Account ID: {{ account.account_id }}</p>
@@ -15,6 +15,43 @@
             <option value="all_time" {% if selected_timeframe == "all_time" %}selected{% endif %}>All Time</option>
         </select>
     </form>
+
+    <!-- Bar Graph Overview -->
+    {% if total_received or total_sent %}
+    <div class="mb-4">
+        <h4>Overview {{ selected_timeframe }}</h4>
+        <canvas id="transactionChart" width="250" height="80"></canvas>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('transactionChart').getContext('2d');
+        const transactionChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Received', 'Sent'],
+                datasets: [{
+                    label: '',
+                    data: [{{ total_received }}, {{ total_sent }}],
+                    backgroundColor: ['#28a745', '#dc3545'], // Green for received, Red for sent
+                    borderColor: ['#218838', '#c82333'], // Slightly darker shades for border
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        display: false // Disable the legend
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+    {% endif %}
 
     {% if transaction_history %}
     <div class="table-responsive">
@@ -31,16 +68,22 @@
                 <tr>
                     <td>{{ transaction.date }}</td>
                     <td>{{ transaction.receiving_account_id }}</td>
-                    <td>{{ transaction.amount }}</td>
+                    <td>
+                        {% if transaction.receiving_account_id|stringformat:"s" == account.account_id|stringformat:"s" %}
+                            + {{ transaction.amount }}
+                        {% else %}
+                            - {{ transaction.amount }}
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-        <a href="{% url 'customers:dashboard' %}" class="btn btn-secondary">Back to Customer Dashboard</a>
+    <a href="{% url 'accounts:account_detail' account.account_id %}" class="btn btn-secondary">Back to Account Details</a>
     {% else %}
     <p>No transaction history.</p>
-        <a href="{% url 'customers:dashboard' %}" class="btn btn-secondary">Back to Customer Dashboard</a>
+    <a href="{% url 'accounts:account_detail' account.account_id %}" class="btn btn-secondary">Back to Account Details</a>
     {% endif %}
     {% else %}
     <div>Please <a href="{% url 'customers:customers_login' %}?next={% url 'customers:dashboard' %}">log in</a></div>
