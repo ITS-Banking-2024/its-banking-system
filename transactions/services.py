@@ -33,31 +33,42 @@ class TransactionService(ITransactionService):
 
     def get_transaction_history(self, account_id: UUID, timeframe: str) -> List[dict]:
         """
-                Fetch transactions based on account_id and timeframe.
+        Fetch transactions based on account_id and timeframe.
 
-                :param account_id: UUID of the account whose transactions are to be fetched.
-                :param timeframe: Filter transactions by timeframe ('30_days', '60_days', or 'all_time').
-                :return: A list of dictionaries containing transaction details.
+        :param account_id: UUID of the account whose transactions are to be fetched.
+        :param timeframe: Filter transactions by timeframe ('30_days', '60_days', or 'all_time').
+        :return: A list of dictionaries containing transaction details.
         """
 
+        # Determine the start date based on the timeframe
         if timeframe == "30_days":
             start_date = datetime.now() - timedelta(days=30)
         elif timeframe == "60_days":
             start_date = datetime.now() - timedelta(days=60)
-        else:
+        elif timeframe == "all_time":
             start_date = None
+        else:
+            raise ValueError("Invalid timeframe. Valid options are '30_days', '60_days', or 'all_time'.")
 
+        # Query transactions sent or received by the account within the specified timeframe
         if start_date:
-            transactions = Transaction.objects.filter(
-                sending_account_id=account_id,
-                date__gte=start_date
+            sent_transactions = Transaction.objects.filter(
+                sending_account_id=account_id, date__gte=start_date
+            )
+            received_transactions = Transaction.objects.filter(
+                receiving_account_id=account_id, date__gte=start_date
             )
         else:
-            transactions = Transaction.objects.filter(sending_account_id=account_id)
+            sent_transactions = Transaction.objects.filter(sending_account_id=account_id)
+            received_transactions = Transaction.objects.filter(receiving_account_id=account_id)
 
+        # Combine sent and received transactions
+        transactions = sent_transactions.union(received_transactions).order_by('-date')
+
+        # Format the transaction history as a list of dictionaries
         transaction_history = [
             {
-                "transaction_id": transaction.id,
+                "transaction_id": str(transaction.transaction_id),
                 "sending_account_id": str(transaction.sending_account_id),
                 "receiving_account_id": str(transaction.receiving_account_id),
                 "amount": float(transaction.amount),
