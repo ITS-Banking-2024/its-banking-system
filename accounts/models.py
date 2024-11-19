@@ -19,7 +19,7 @@ class AccountBase(Account):
         db_table: str = "account_base"
 
     def __str__(self):
-        return f"Account {self.account_id} with balance {self.balance}"
+        return f"Account {self.account_id}"
 
 class CheckingAccount(AccountBase):
     class Meta:

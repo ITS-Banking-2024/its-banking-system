@@ -13,6 +13,9 @@ from core.models import Account
 # this is the concrete impelementation of the IAccountService
 class AccountService(IAccountService):
 
+    def get_balance(self, account_id: UUID) -> float:
+        pass
+
     def validate_accounts_for_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
         # Validate sending account
         sending_account = AccountBase.objects.filter(account_id=sending_account_id).first()
@@ -29,21 +32,15 @@ class AccountService(IAccountService):
             raise ValidationError("Transaction amount must be greater than zero.")
 
         # Validate sufficient balance in the sending account
-        if sending_account.balance < amount:
-            raise ValidationError("Insufficient balance in the sending account.")
+        #TODO implement calculate balance using transaction history and opening balance
+        #if sending_account.balance < amount:
+        #    raise ValidationError("Insufficient balance in the sending account.")
         return True
 
     def get_all_accounts(self) -> List[Account]:
         return AccountBase.objects.all()
 
-    def get_account_balance(self, account: Account) -> float:
-        return account.balance
 
     def get_accounts_by_customer_id(self, customer_id: UUID) -> models.QuerySet:
         return list(AccountBase.objects.filter(user_id=customer_id))
-
-
-    # implement this method !!!!
-    def get_balance(self, account_id):
-        return 0
 

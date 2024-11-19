@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, is_password_usable
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 import uuid
@@ -51,14 +51,9 @@ class Customer(AbstractUser):
     def __str__(self) -> str:
         return f'{self.customer_id}, {self.first_name}, {self.last_name}'
 
-    def save(self, *args, **kwargs):
-        if self.password and not self.password.startswith('pbkdf2_sha256'):
-            self.password = make_password(self.password)
-        super().save(*args, **kwargs)
 
 class Account(models.Model):
     account_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    balance = models.DecimalField(max_digits=10, decimal_places=2)
     account_type = models.CharField(max_length=10, choices=[('checking', 'Checking'), ('savings', 'Savings'), ('custody', 'Custody')], null=True)
 
 

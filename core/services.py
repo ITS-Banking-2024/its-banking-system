@@ -61,10 +61,6 @@ class IAccountService(ABC):
         pass
 
     @abstractmethod
-    def get_account_balance(self, account: Account) -> float:
-        pass
-
-    @abstractmethod
     def get_accounts_by_customer_id(self, customer_id: UUID) -> List[Account]:
         pass
 
@@ -128,15 +124,6 @@ class ITransactionService(ABC):
 
     @abstractmethod
     def delete_transaction(self, transaction_id: int):
-        pass
-
-    # here propably we can use account service to invoke the check_balance method
-    @abstractmethod
-    def check_balance(self, account: Account):
-        pass
-
-    @abstractmethod
-    def update_balance(self, sending_account: Account, receiving_account: Account, amount: float):
         pass
 
     @abstractmethod
