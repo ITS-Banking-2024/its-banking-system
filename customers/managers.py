@@ -1,4 +1,6 @@
 from typing import Optional, List, Union
+
+from django.contrib.auth.hashers import make_password
 from django.db.models import QuerySet
 from core.managers import CoreProductManager
 from core.models import Customer
@@ -13,7 +15,7 @@ class CustomerManager(BaseUserManager):
             raise ValueError('Email for user must be set.')
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
-        user.set_password(password)
+        user.set_password(make_password(password))
         user.save()
         return user
 
