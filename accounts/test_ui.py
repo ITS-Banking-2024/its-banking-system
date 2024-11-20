@@ -32,8 +32,8 @@ class DashboardTests(TestCase):
         customer_id = uuid4()
 
         self.mock_account_list = [
-            TestContainer.account_factory(account_id=account_id_1, balance=1000.00, account_type="checking", user_id=customer_id),
-            TestContainer.account_factory(account_id=account_id_2, balance=5000.00, account_type="savings", user_id=customer_id),
+            TestContainer.account_factory(account_id=account_id_1, account_type="checking", user_id=customer_id),
+            TestContainer.account_factory(account_id=account_id_2, account_type="savings", user_id=customer_id),
         ]
 
         # Create an instance of the test container
@@ -65,7 +65,7 @@ class DashboardTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
          # Assert that the redirect location is the login page
-        self.assertRedirects(response, reverse("customers:customers_login"))
+        self.assertRedirects(response, f"{reverse('customers:customers_login')}?next={reverse('customers:dashboard')}")
 
     def test_dashboard_authenticated(self):
         # Mock the authenticated user
