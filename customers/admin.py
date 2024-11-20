@@ -1,15 +1,19 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from .models import Customer
 
-from customers.models import Customer
 
-"""
-The admin.site.register() method is used to register a model with the Django admin interface. 
-This allows us to manage the instances of the model through the admin interface, including creating, 
-editing, and deleting instances.
-In this file, we are registering the Customer model with the admin interface. 
-Once registered, we can access the Customer model through the admin interface and perform CRUD 
-(Create, Read, Update, Delete) operations on its instances.
-"""
+class CustomerAdmin(UserAdmin):
+    model = Customer
+    # If you have any custom fields in your Customer model, make sure to add them here
+    fieldsets = UserAdmin.fieldsets + (
+        (None, {'fields': ('address',)}),  # Example for custom fields
+    )
+    # in case the UserAdmin has additional fields
+    #add_fieldsets = UserAdmin.add_fieldsets + (
+    #    (None, {'fields': ('custom_field',)}),  # Example for custom fields
+    #)
 
-# Register your models here.
-admin.site.register(Customer)
+
+# Register your custom admin with the Customer model
+admin.site.register(Customer, CustomerAdmin)
