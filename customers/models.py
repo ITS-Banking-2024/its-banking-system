@@ -25,22 +25,6 @@ class CustomerBase(Customer):
 
 
 # this is the concrete model that we will use for the project
-
-"""
-id
-PIN
-name
-surname
-email
-dob
-checkingBalance
-hasSavings
-savingsBalance
-hasTrading
-stockList
-"""
 class Customer(CustomerBase):
     class Meta:
         db_table: str = "customer_concrete"
-    # we are adding a credit field to the customer model
-    credit: float = models.FloatField(null=True)

@@ -20,13 +20,3 @@ class TestCustomerService(TestCase):
         self.mock_instance = Mock()
         # create a CustomerService instance
         self.customer_service: CustomerService = CustomerService()
-
-    def test_customer_has_credit(self):
-        # Set the credit property of the mock instance
-        self.mock_instance.credit = 10
-        assert self.customer_service.has_credit(self.mock_instance) is True
-
-    def test_customer_without_credit(self):
-        # Set the credit property of the mock instance
-        self.mock_instance.credit = 0
-        assert self.customer_service.has_credit(self.mock_instance) is False

@@ -9,7 +9,6 @@ class TestCustomer(TestCase):
         # Create a Customer instance
         customer = Customer.objects.create(
             username="testuser",
-            credit=1000.00
         )
 
         # Verify that the Customer instance was created and can be retrieved
@@ -21,7 +20,6 @@ class TestCustomer(TestCase):
         # Create a Customer instance
         customer = Customer.objects.create(
             username="testuser",
-            credit=1000.00
         )
 
         # Verify that the Customer instance was created and can be retrieved
@@ -39,12 +37,10 @@ class TestCustomer(TestCase):
         # Create a Customer instance
         customer_1 = Customer.objects.create(
             username="testuser",
-            credit=1000.00
         )
 
         customer_2 = Customer.objects.create(
             username="testuser2",
-            credit=2000.00
         )
 
         all_customers = Customer.objects.get_all_customers()

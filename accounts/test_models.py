@@ -12,7 +12,7 @@ class TestAccounts(TestCase):
         # Get the Customer model
         Customer = apps.get_model(CUSTOMER_MODEL)
 
-        self.customer = Customer.objects.create(username="testuser", credit=1000.00)
+        self.customer = Customer.objects.create(username="testuser")
 
     def test_new_checking_account(self) -> None:
         # Create a CheckingAccount instance as the reference account

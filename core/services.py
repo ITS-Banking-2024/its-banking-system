@@ -79,14 +79,6 @@ class ICustomerService(ABC):
         pass
 
     @abstractmethod
-    def has_credit(self, customer) -> bool:
-        pass
-
-    @abstractmethod
-    def redeem_credit(self, customer, amount) -> bool:
-        pass
-
-    @abstractmethod
     def get_by_id(self, id: int) -> models.QuerySet:
         pass
 

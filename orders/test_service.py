@@ -40,19 +40,4 @@ class TestOrderService(unittest.TestCase):
     def tearDown(self):
         patch.stopall()
 
-    def test_create_order_customer_has_credit(self):
-        # Set the redeem_credit method of the mock instance to return True
-        self.customer_service.redeem_credit.return_value = True
-        order = self.order_service.make_order_from_dto(self.data)
-        assert order is not None  # assert that the order is not None
-        assert order.save.called  # assert that the save method of the order was called
-        assert self.customer_service.redeem_credit.called  # assert that the redeem_credit method was called
-
-    def test_create_order_customer_without_credit(self):
-        # Set the redeem_credit method of the mock instance to return True
-        self.customer_service.redeem_credit.return_value = False
-        with self.assertRaises(Exception):
-            self.order_service.make_order_from_dto(self.data)
-        assert self.customer_service.redeem_credit.called
-
 

@@ -16,6 +16,22 @@ class TransactionService(ITransactionService):
     def __init__(self, account_service: Provide("account_service")):
         self.account_service = account_service
 
+    def create_new_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
+        # Wrap the operation in a transaction for safety
+        try:
+            with transaction.atomic():
+                # Create the transaction record
+                transaction_record = Transaction.objects.create(
+                    sending_account_id=sending_account_id,
+                    receiving_account_id=receiving_account_id,
+                    amount=amount,
+                    date=datetime.now()
+                )
+            return True
+        except Exception as e:
+            raise ValidationError(f"Transaction failed: {str(e)}")
+
+    #TODO: delete this
     def create_transaction(self, sending_account: Account, receiving_account: Account, amount: float):
         pass
 
@@ -74,20 +90,6 @@ class TransactionService(ITransactionService):
 
         return transaction_history
 
-    def create_new_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
-        # Wrap the operation in a transaction for safety
-        try:
-            with transaction.atomic():
-                # Create the transaction record
-                transaction_record = Transaction.objects.create(
-                    sending_account_id=sending_account_id,
-                    receiving_account_id=receiving_account_id,
-                    amount=amount,
-                    date=datetime.now()
-                )
-            return True
-        except Exception as e:
-            raise ValidationError(f"Transaction failed: {str(e)}")
 
 class BankingServiceImplI(ITransactionService):
     def create_transaction(self, sending_account: Account, receiving_account: Account, amount: float) -> Transaction:
