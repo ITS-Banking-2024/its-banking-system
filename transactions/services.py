@@ -25,11 +25,6 @@ class TransactionService(ITransactionService):
     def delete_transaction(self, transaction_id: int):
         pass
 
-    def check_balance(self, account: Account):
-        pass
-
-    def update_balance(self, sending_account: Account, receiving_account: Account, amount: float):
-        pass
 
     def get_transaction_history(self, account_id: UUID, timeframe: str) -> List[dict]:
         """

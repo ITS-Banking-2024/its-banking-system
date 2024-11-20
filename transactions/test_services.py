@@ -16,12 +16,10 @@ class TestBankingServiceImplI(unittest.TestCase):
 
         # Mock sending account
         self.sending_account = Mock(spec=AccountBase)
-        self.sending_account.balance = 1000.0
         self.sending_account.save = Mock()
 
         # Mock receiving account
         self.receiving_account = Mock(spec=AccountBase)
-        self.receiving_account.balance = 500.0
         self.receiving_account.save = Mock()
 
         # Mock the creation of a transaction
@@ -44,9 +42,6 @@ class TestBankingServiceImplI(unittest.TestCase):
             self.assertIsNotNone(transaction)
             mock_create.assert_called_once()
 
-            # check if we updated balances
-            self.assertEqual(self.sending_account.balance, 900.0)
-            self.assertEqual(self.receiving_account.balance, 600.0)
 
             # check if we saved the accounts
             self.sending_account.save.assert_called_once()
@@ -63,9 +58,6 @@ class TestBankingServiceImplI(unittest.TestCase):
         # check thath transation is created
         self.mock_transaction_model.objects.create.assert_not_called()
 
-        # check if the balances were updated
-        self.assertEqual(self.sending_account.balance, 1000.0)
-        self.assertEqual(self.receiving_account.balance, 500.0)
 
         # check if the save method was called
         self.sending_account.save.assert_not_called()

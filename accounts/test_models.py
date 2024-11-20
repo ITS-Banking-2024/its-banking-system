@@ -18,7 +18,6 @@ class TestAccounts(TestCase):
         # Create a CheckingAccount instance as the reference account
         checking_account = CheckingAccount.objects.create(
             user_id=self.customer,
-            balance=1000.00,
             PIN = "1234"
         )
 
@@ -32,14 +31,12 @@ class TestAccounts(TestCase):
         # Create a CheckingAccount instance as the reference account
         checking_account = CheckingAccount.objects.create(
             user_id=self.customer,
-            balance=1000.00,
             PIN = '1234'
         )
 
         # Create a SavingsAccount instance with the reference account
         savings_account = SavingsAccount.objects.create(
             user_id=self.customer,
-            balance=500.00,
             reference_account=checking_account
         )
 
@@ -53,14 +50,12 @@ class TestAccounts(TestCase):
         # Create a CheckingAccount instance as the reference account
         checking_account = CheckingAccount.objects.create(
             user_id=self.customer,
-            balance=1000.00,
             PIN = '1234'
         )
 
         # Create a CustodyAccount instance with the reference account
         custody_account = CustodyAccount.objects.create(
             user_id=self.customer,
-            balance=500.00,
             reference_account=checking_account
         )
 
@@ -75,7 +70,6 @@ class TestAccounts(TestCase):
         # Create a CheckingAccount instance for the customer
         checking_account = CheckingAccount.objects.create(
             user_id=self.customer,
-            balance=1000.00,
             PIN="1234"
         )
 
@@ -92,12 +86,10 @@ class TestAccounts(TestCase):
         # Create multiple CheckingAccount instances for the customer
         checking_account_1 = CheckingAccount.objects.create(
             user_id=self.customer,
-            balance=1000.00,
             PIN = "1234"
         )
         checking_account_2 = CheckingAccount.objects.create(
             user_id=self.customer,
-            balance=2000.00,
             PIN="2345"
         )
 
@@ -115,7 +107,6 @@ class TestAccounts(TestCase):
         # Create a CheckingAccount instance for the customer
         checking_account = CheckingAccount.objects.create(
             user_id=self.customer,
-            balance=1000.00,
             PIN = "1234"
         )
 
@@ -131,14 +122,12 @@ class TestAccounts(TestCase):
         # Create a CheckingAccount instance for the customer
         checking_account = CheckingAccount.objects.create(
             user_id=self.customer,
-            balance=1000.00,
             PIN="1234"
         )
 
         # Create a CustodyAccount instance with the reference account
         custody_account = CustodyAccount.objects.create(
             user_id=self.customer,
-            balance=500.00,
             reference_account=checking_account
         )
 
