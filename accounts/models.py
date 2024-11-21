@@ -9,7 +9,7 @@ class AccountBase(Account):
 
     objects : AccountManager = AccountManager()
 
-    user_id = models.ForeignKey(CUSTOMER_MODEL, related_name='accounts', on_delete=models.CASCADE, null=True, blank=True)
+    customer_id = models.ForeignKey(CUSTOMER_MODEL, related_name='accounts', on_delete=models.CASCADE, null=True, blank=True)
     opening_balance = models.FloatField(default=0.0)
     type : str = models.CharField(max_length=50, null=False, default='checking', choices=[('checking', 'Checking'), ('savings', 'Savings'), ('custody', 'Custody')])
 

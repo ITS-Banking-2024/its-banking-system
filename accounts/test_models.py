@@ -17,7 +17,7 @@ class TestAccounts(TestCase):
     def test_new_checking_account(self) -> None:
         # Create a CheckingAccount instance as the reference account
         checking_account = CheckingAccount.objects.create(
-            user_id=self.customer,
+            customer_id=self.customer,
             PIN = "1234"
         )
 
@@ -30,13 +30,13 @@ class TestAccounts(TestCase):
     def test_new_savings_account(self) -> None:
         # Create a CheckingAccount instance as the reference account
         checking_account = CheckingAccount.objects.create(
-            user_id=self.customer,
+            customer_id=self.customer,
             PIN = '1234'
         )
 
         # Create a SavingsAccount instance with the reference account
         savings_account = SavingsAccount.objects.create(
-            user_id=self.customer,
+            customer_id=self.customer,
             reference_account=checking_account
         )
 
@@ -49,13 +49,13 @@ class TestAccounts(TestCase):
     def test_new_custody_account(self) -> None:
         # Create a CheckingAccount instance as the reference account
         checking_account = CheckingAccount.objects.create(
-            user_id=self.customer,
+            customer_id=self.customer,
             PIN = '1234'
         )
 
         # Create a CustodyAccount instance with the reference account
         custody_account = CustodyAccount.objects.create(
-            user_id=self.customer,
+            customer_id=self.customer,
             reference_account=checking_account
         )
 
@@ -66,35 +66,35 @@ class TestAccounts(TestCase):
         self.assertEqual(retrieved_account.reference_account, checking_account)
 
 
-    def test_find_single_account_by_user_id(self):
+    def test_find_single_account_by_customer_id(self):
         # Create a CheckingAccount instance for the customer
         checking_account = CheckingAccount.objects.create(
-            user_id=self.customer,
+            customer_id=self.customer,
             PIN="1234"
         )
 
 
         # Retrieve accounts by customer_id
-        retrieved_accounts = CheckingAccount.objects.get_by_user_id(self.customer)
+        retrieved_accounts = CheckingAccount.objects.get_by_customer_id(self.customer)
 
         # Assert that retrieved accounts are not None and contain the created checking_account
         self.assertIsNotNone(retrieved_accounts)
         self.assertIn(checking_account, retrieved_accounts)
 
 
-    def test_find_all_accounts_by_user_id(self):
+    def test_find_all_accounts_by_customer_id(self):
         # Create multiple CheckingAccount instances for the customer
         checking_account_1 = CheckingAccount.objects.create(
-            user_id=self.customer,
+            customer_id=self.customer,
             PIN = "1234"
         )
         checking_account_2 = CheckingAccount.objects.create(
-            user_id=self.customer,
+            customer_id=self.customer,
             PIN="2345"
         )
 
         # Retrieve accounts by customer_id
-        retrieved_accounts = CheckingAccount.objects.get_by_user_id(self.customer)
+        retrieved_accounts = CheckingAccount.objects.get_by_customer_id(self.customer)
 
         # Assert that retrieved accounts are not None and contain the created checking_accounts
         self.assertIsNotNone(retrieved_accounts)
@@ -106,7 +106,7 @@ class TestAccounts(TestCase):
     def test_delete_checking_account(self):
         # Create a CheckingAccount instance for the customer
         checking_account = CheckingAccount.objects.create(
-            user_id=self.customer,
+            customer_id=self.customer,
             PIN = "1234"
         )
 
@@ -121,18 +121,18 @@ class TestAccounts(TestCase):
     def test_deleting_checking_accounts_delete_referenced_account(self):
         # Create a CheckingAccount instance for the customer
         checking_account = CheckingAccount.objects.create(
-            user_id=self.customer,
+            customer_id=self.customer,
             PIN="1234"
         )
 
         # Create a CustodyAccount instance with the reference account
         custody_account = CustodyAccount.objects.create(
-            user_id=self.customer,
+            customer_id=self.customer,
             reference_account=checking_account
         )
 
         # get all accounts from user
-        retrieved_accounts = AccountBase.objects.get_by_user_id(self.customer)
+        retrieved_accounts = AccountBase.objects.get_by_customer_id(self.customer)
 
         # Assert that retrieved accounts are not None and contain the created checking_accounts
         self.assertIsNotNone(retrieved_accounts)

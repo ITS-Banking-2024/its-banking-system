@@ -51,7 +51,7 @@ class AdminServiceImpl(IUserService):
     def delete_user(self):
         pass
 
-    def check_user_balance(self, user_id):
+    def check_user_balance(self, customer_id):
         pass
 
 

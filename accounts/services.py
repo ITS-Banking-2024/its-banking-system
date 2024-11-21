@@ -42,5 +42,5 @@ class AccountService(IAccountService):
 
 
     def get_accounts_by_customer_id(self, customer_id: UUID) -> models.QuerySet:
-        return list(AccountBase.objects.filter(user_id=customer_id))
+        return list(AccountBase.objects.filter(customer_id=customer_id))
 

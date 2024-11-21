@@ -29,7 +29,7 @@ class CustomerManager(BaseUserManager):
             raise ValueError('Superuser must have is_superuser=True.')
         return self.create_user(email, password, **extra_fields)
 
-    def get_by_user_id(self, customer_id: Union[int, str]) -> Optional[Customer]:
+    def get_by_customer_id(self, customer_id: Union[int, str]) -> Optional[Customer]:
         # Query for Customer object by customer_id (UUID or int)
         qs = self.get_queryset().filter(customer_id=customer_id)
         return qs.first() if qs.exists() else None

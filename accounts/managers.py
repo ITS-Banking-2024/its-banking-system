@@ -13,9 +13,9 @@ class AccountManager(Manager):
         qs = self.get_queryset().filter(account_id=account_id)
         return qs.first() if qs.exists() else None
 
-    def get_by_user_id(self, user_id: Union[int, str]) -> QuerySet:
+    def get_by_customer_id(self, customer_id: Union[int, str]) -> QuerySet:
     # Query for all Account objects by customer_id (UUID or int)
-        return self.get_queryset().filter(user_id=user_id)
+        return self.get_queryset().filter(customer_id=customer_id)
 
     def delete_checking_account(self, account_id: str) -> None:
         # Delete a CheckingAccount object by account_id (UUID)

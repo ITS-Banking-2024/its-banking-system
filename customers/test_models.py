@@ -12,7 +12,7 @@ class TestCustomer(TestCase):
         )
 
         # Verify that the Customer instance was created and can be retrieved
-        retrieved_customer = Customer.objects.get_by_user_id(customer.customer_id)
+        retrieved_customer = Customer.objects.get_by_customer_id(customer.customer_id)
         self.assertIsNotNone(retrieved_customer)
         self.assertEqual(retrieved_customer.customer_id, customer.customer_id)
 
@@ -23,14 +23,14 @@ class TestCustomer(TestCase):
         )
 
         # Verify that the Customer instance was created and can be retrieved
-        retrieved_customer = Customer.objects.get_by_user_id(customer.customer_id)
+        retrieved_customer = Customer.objects.get_by_customer_id(customer.customer_id)
         self.assertIsNotNone(retrieved_customer)
 
         # Delete the Customer instance
         Customer.objects.delete_customer(customer.customer_id)
 
         # Verify that the Customer instance was deleted
-        retrieved_customer = Customer.objects.get_by_user_id(customer.customer_id)
+        retrieved_customer = Customer.objects.get_by_customer_id(customer.customer_id)
         self.assertIsNone(retrieved_customer)
 
     def test_get_all_customers(self) -> None:
