@@ -1,3 +1,4 @@
+from decimal import Decimal
 from lib2to3.fixes.fix_input import context
 
 from django.http import HttpRequest, HttpResponse, Http404
@@ -76,29 +77,48 @@ def success_screen(request: HttpRequest, success: bool, message: str, account_id
         "account_id": account_id
     })
 @inject
-def history(request: HttpRequest, account_id, transaction_service: ITransactionService = Provide["transaction_service"], account_service: IAccountService = Provide["account_service"]):
+def history(
+    request: HttpRequest,
+    account_id,
+    transaction_service: ITransactionService = Provide["transaction_service"],
+    account_service: IAccountService = Provide["account_service"],
+):
     timeframe = request.GET.get("timeframe", "all_time")
-    total_received = 0
-    total_sent = 0
+    total_received = Decimal("0.00")
+    total_sent = Decimal("0.00")
 
+    # Fetch the account object
     account = (
-            CheckingAccount.objects.filter(account_id=account_id).first()
-            or SavingsAccount.objects.filter(account_id=account_id).first()
-            or CustodyAccount.objects.filter(account_id=account_id).first()
+        CheckingAccount.objects.filter(account_id=account_id).first()
+        or SavingsAccount.objects.filter(account_id=account_id).first()
+        or CustodyAccount.objects.filter(account_id=account_id).first()
     )
     if not account:
         raise Http404("Account not found.")
 
+    # Fetch transaction history
     transaction_history = transaction_service.get_transaction_history(account_id, timeframe)
 
+    # Calculate total sent and received amounts
     for transaction in transaction_history:
         if str(transaction["sending_account_id"]) == str(account.account_id):
-            total_sent += transaction["amount"]
+            total_sent += Decimal(transaction["amount"])
         elif str(transaction["receiving_account_id"]) == str(account.account_id):
-            total_received += transaction["amount"]
+            total_received += Decimal(transaction["amount"])
         else:
-            raise ValidationError(f"Rouge transaction.")
+            raise ValidationError(f"Rogue transaction.")
 
-    context = {'account': account, 'transaction_history': transaction_history, 'selected_timeframe': timeframe, 'total_received': total_received, 'total_sent': total_sent}
+    # Round totals to 2 decimal places
+    total_sent = total_sent.quantize(Decimal("0.01"))
+    total_received = total_received.quantize(Decimal("0.01"))
 
-    return render(request, 'accounts/transaction_history.html', context)
+    # Prepare context for rendering
+    context = {
+        "account": account,
+        "transaction_history": transaction_history,
+        "selected_timeframe": timeframe,
+        "total_received": total_received,
+        "total_sent": total_sent,
+    }
+
+    return render(request, "accounts/transaction_history.html", context)

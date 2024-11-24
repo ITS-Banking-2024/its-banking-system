@@ -80,7 +80,7 @@ class TransactionService(ITransactionService):
                 "transaction_id": str(transaction.transaction_id),
                 "sending_account_id": str(transaction.sending_account_id),
                 "receiving_account_id": str(transaction.receiving_account_id),
-                "amount": float(transaction.amount),
+                "amount": str(transaction.amount),
                 "date": transaction.date.strftime("%Y-%m-%d %H:%M:%S"),
             }
             for transaction in transactions
