@@ -1,6 +1,7 @@
 from typing import List
 from uuid import UUID
 
+from dependency_injector.wiring import Provide, inject
 from django.db import models
 from marshmallow import ValidationError
 
@@ -13,8 +14,22 @@ from core.models import Account
 # this is the concrete impelementation of the IAccountService
 class AccountService(IAccountService):
 
-    def get_balance(self, account_id: UUID) -> float:
-        pass
+    @inject
+    def __init__(self, transaction_service: Provide("transaction_service")):
+        self.transaction_service = transaction_service
+
+    def get_balance(self, account_id: UUID,) -> float:
+        opening_balance = AccountBase.objects.filter(account_id=account_id).first().opening_balance
+        balance = opening_balance
+        transactions = self.transaction_service.get_transaction_history(account_id, "all_time")
+        for transaction in transactions:
+            if transaction["sending_account_id"] == str(account_id):
+                balance -= transaction["amount"]
+            elif transaction["receiving_account_id"] == str(account_id):
+                balance += transaction["amount"]
+            else:
+                raise ValidationError(f"Transaction not made with this account")
+        return balance
 
     def validate_accounts_for_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
         # Validate sending account

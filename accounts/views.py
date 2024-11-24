@@ -14,7 +14,8 @@ from accounts.forms import TransactionForm
 from django.contrib import messages
 
 
-def account_detail(request, account_id):
+@inject
+def account_detail(request, account_id, account_service: IAccountService = Provide["account_service"]):
     # Try to find the account in all concrete account models
     account = (
         CheckingAccount.objects.filter(account_id=account_id).first()
@@ -22,11 +23,13 @@ def account_detail(request, account_id):
         or CustodyAccount.objects.filter(account_id=account_id).first()
     )
 
+    balance = account_service.get_balance(account_id)
+
     # If account is still None, raise a 404 error
     if not account:
         raise Http404("Account not found.")
 
-    return render(request, 'accounts/account_details.html', {'account': account})
+    return render(request, 'accounts/account_details.html', {'account': account, 'balance': balance})
 
 
 @inject

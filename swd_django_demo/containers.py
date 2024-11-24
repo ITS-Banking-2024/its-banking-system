@@ -41,8 +41,13 @@ class Container(containers.DeclarativeContainer):
         TradingServiceImplI,
     )
 
+    transaction_service = providers.Singleton(
+        TransactionService
+    )
+
     account_service = providers.Singleton(
         AccountService,
+        transaction_service=transaction_service
     )
 
     customer_service = providers.Singleton(
@@ -57,8 +62,4 @@ class Container(containers.DeclarativeContainer):
 
     admin_service = providers.Singleton(
         AdminServiceImpl
-    )
-
-    transaction_service = providers.Singleton(
-        TransactionService, account_service=account_service
     )

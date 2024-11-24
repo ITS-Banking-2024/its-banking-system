@@ -13,8 +13,6 @@ from typing import Optional, List
 
 
 class TransactionService(ITransactionService):
-    def __init__(self, account_service: Provide("account_service")):
-        self.account_service = account_service
 
     def create_new_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
         # Wrap the operation in a transaction for safety

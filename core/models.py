@@ -54,7 +54,6 @@ class Customer(AbstractUser):
 
 class Account(models.Model):
     account_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
-    account_type = models.CharField(max_length=10, choices=[('checking', 'Checking'), ('savings', 'Savings'), ('custody', 'Custody')], null=True)
 
 
     class Meta:

@@ -32,8 +32,8 @@ class DashboardTests(TestCase):
         customer_id = uuid4()
 
         self.mock_account_list = [
-            TestContainer.account_factory(account_id=account_id_1, account_type="checking", customer_id=customer_id),
-            TestContainer.account_factory(account_id=account_id_2, account_type="savings", customer_id=customer_id),
+            TestContainer.account_factory(account_id=account_id_1, type="checking", customer_id=customer_id),
+            TestContainer.account_factory(account_id=account_id_2, type="savings", customer_id=customer_id),
         ]
 
         # Create an instance of the test container
@@ -88,7 +88,7 @@ class DashboardTests(TestCase):
                 self.assertEqual(mock_account.balance, context_account.balance)
 
                 # Assert account types are the same
-                self.assertEqual(mock_account.account_type, context_account.account_type)
+                self.assertEqual(mock_account.type, context_account.type)
 
                 # Assert account user IDs are the same
                 self.assertEqual(mock_account.customer_id, context_account.customer_id)
