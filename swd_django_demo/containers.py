@@ -12,7 +12,7 @@ from customers.services import CustomerService
 from orders.services import OrderService
 from products.models import Product
 from products.services import ProductService
-from transactions.services import BankingServiceImplI, TradingServiceImplI, TransactionService
+from transactions.services import TransactionService
 from accounts.services import AccountService
 
 
@@ -30,14 +30,6 @@ class Container(containers.DeclarativeContainer):
     # Factory provider for creating instances of Product model
     product_factory = providers.Factory(Product, id=int, name=str, description=str )
 
-
-    banking_service = providers.Singleton(
-        BankingServiceImplI,
-    )
-
-    trading_service = providers.Singleton(
-        TradingServiceImplI,
-    )
 
     transaction_service = providers.Singleton(
         TransactionService

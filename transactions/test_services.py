@@ -1,14 +1,14 @@
 import unittest
 from unittest.mock import patch, Mock
-from transactions.services import BankingServiceImplI
+from transactions.services import TransactionService
 from datetime import datetime
 from accounts.models import AccountBase
 
 
 class TestTransactionServiceImplI(unittest.TestCase):
     def setUp(self):
-        # initialize the BankingServiceImplI instance
-        self.transaction_service = BankingServiceImplI()
+        # initialize the TransactionService instance
+        self.transaction_service = TransactionService()
 
         # patch Transaction model and account model instances
         self.mock_transaction_model = patch('transactions.models.Transaction').start()

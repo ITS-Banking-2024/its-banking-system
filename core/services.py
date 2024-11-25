@@ -139,14 +139,3 @@ class ITradingService(ABC):
     @abstractmethod
     def get_current_stock_price(self, stock_id: UUID) -> float:
         pass
-
-# Interface for Online Banking Service
-class IOnlineBankingService(ABC):
-
-    @abstractmethod
-    def execute_online_transaction(self, transaction_id: UUID) -> bool:
-        pass
-
-    @abstractmethod
-    def create_online_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> UUID:
-        pass
