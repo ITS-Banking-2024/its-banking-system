@@ -95,16 +95,6 @@ class ICustomerService(ABC):
         pass
 
 
-
-class IUserService(ABC):
-    @abstractmethod
-    def login(self):
-        pass
-
-    @abstractmethod
-    def get_user_info(self):
-        pass
-
 class ITransactionService(ABC):
     @abstractmethod
     def create_transaction(self, sending_account: Account, receiving_account: Account, amount: float):

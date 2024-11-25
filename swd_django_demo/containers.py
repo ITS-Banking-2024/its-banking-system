@@ -13,9 +13,7 @@ from orders.services import OrderService
 from products.models import Product
 from products.services import ProductService
 from transactions.services import BankingServiceImplI, TradingServiceImplI, TransactionService
-from customers.services import CustomerServiceImpl, AdminServiceImpl
 from accounts.services import AccountService
-from accounts.models import Account
 
 
 
@@ -58,8 +56,4 @@ class Container(containers.DeclarativeContainer):
     # Singleton provider for OrderService with product_service as a dependency
     order_service = providers.Singleton(
         OrderService, product_service=product_service, customer_service=customer_service
-    )
-
-    admin_service = providers.Singleton(
-        AdminServiceImpl
     )

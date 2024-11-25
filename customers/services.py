@@ -5,7 +5,7 @@ from uuid import UUID
 from core.models import Account
 
 
-from core.services import ICustomerService, IUserService
+from core.services import ICustomerService
 from customers.models import Customer
 
 
@@ -31,42 +31,4 @@ class CustomerService(ICustomerService):
         return self.account_service.get_accounts_by_customer_id(customer_id)
 
     def get_customer_balance(self, customer_id: UUID) -> float:
-        pass
-
-
-
-class AdminServiceImpl(IUserService):
-    def login(self):
-        pass
-
-    def get_user_info(self):
-        pass
-
-    def create_user(self):
-        pass
-
-    def update_user(self):
-        pass
-
-    def delete_user(self):
-        pass
-
-    def check_user_balance(self, customer_id):
-        pass
-
-
-class CustomerServiceImpl(IUserService):
-    @inject
-    def __init__(self, banking_service: Provide("transaction_service"), trading_service: Provide("trading_service")):
-        self.banking_service = banking_service
-        self.trading_service = trading_service
-
-    def login(self):
-        pass
-
-    def get_user_info(self):
-        pass
-
-    def check_balance(self):
-        self.banking_service.check_balance()
         pass
