@@ -1,34 +1,22 @@
-from decimal import Decimal
-from lib2to3.fixes.fix_input import context
-
-from django.http import HttpRequest, HttpResponse, Http404
-from accounts.models import Account, CheckingAccount, SavingsAccount, CustodyAccount
-
 from dependency_injector.wiring import inject, Provide
-
-from django.shortcuts import render, redirect
+from django.http import Http404
 from django.http import HttpRequest
+from django.shortcuts import render
 from marshmallow import ValidationError
 
-from core.services import ITransactionService, IAccountService
 from accounts.forms import TransactionForm
-from django.contrib import messages
+from accounts.models import CheckingAccount, SavingsAccount, CustodyAccount
+from core.services import ITransactionService, IAccountService
 
 
 @inject
 def account_detail(request, account_id, account_service: IAccountService = Provide["account_service"]):
     # Try to find the account in all concrete account models
-    account = (
-        CheckingAccount.objects.filter(account_id=account_id).first()
-        or SavingsAccount.objects.filter(account_id=account_id).first()
-        or CustodyAccount.objects.filter(account_id=account_id).first()
-    )
-
-    balance = account_service.get_balance(account_id)
-
-    # If account is still None, raise a 404 error
+    account = account_service.get_account(account_id)
     if not account:
         raise Http404("Account not found.")
+
+    balance = account_service.get_balance(account_id)
 
     return render(request, 'accounts/account_details.html', {'account': account, 'balance': balance})
 
@@ -84,41 +72,24 @@ def history(
     account_service: IAccountService = Provide["account_service"],
 ):
     timeframe = request.GET.get("timeframe", "all_time")
-    total_received = Decimal("0.00")
-    total_sent = Decimal("0.00")
 
     # Fetch the account object
-    account = (
-        CheckingAccount.objects.filter(account_id=account_id).first()
-        or SavingsAccount.objects.filter(account_id=account_id).first()
-        or CustodyAccount.objects.filter(account_id=account_id).first()
-    )
+    account = account_service.get_account(account_id)
     if not account:
         raise Http404("Account not found.")
 
     # Fetch transaction history
     transaction_history = transaction_service.get_transaction_history(account_id, timeframe)
 
-    # Calculate total sent and received amounts
-    for transaction in transaction_history:
-        if str(transaction["sending_account_id"]) == str(account.account_id):
-            total_sent += Decimal(transaction["amount"])
-        elif str(transaction["receiving_account_id"]) == str(account.account_id):
-            total_received += Decimal(transaction["amount"])
-        else:
-            raise ValidationError(f"Rogue transaction.")
-
-    # Round totals to 2 decimal places
-    total_sent = total_sent.quantize(Decimal("0.01"))
-    total_received = total_received.quantize(Decimal("0.01"))
+    totals = account_service.get_account_totals(account_id, timeframe)
 
     # Prepare context for rendering
     context = {
         "account": account,
         "transaction_history": transaction_history,
         "selected_timeframe": timeframe,
-        "total_received": total_received,
-        "total_sent": total_sent,
+        "total_received": totals["total_received"],
+        "total_sent": totals["total_sent"],
     }
 
     return render(request, "accounts/transaction_history.html", context)

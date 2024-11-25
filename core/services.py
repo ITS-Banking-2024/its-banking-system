@@ -57,6 +57,10 @@ class IOrderService(ABC):
 
 class IAccountService(ABC):
     @abstractmethod
+    def get_account(self, account_id: UUID):
+        pass
+
+    @abstractmethod
     def get_all_accounts(self) -> List[Account]:
         pass
 
@@ -66,6 +70,10 @@ class IAccountService(ABC):
 
     @abstractmethod
     def get_balance(self, account_id: UUID) -> float:
+        pass
+
+    @abstractmethod
+    def get_account_totals(self, account_id: UUID, timeframe:str) -> dict:
         pass
 
     @abstractmethod
