@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from core.models import Transaction
+from transactions.settings import STOCK_MODEL
 
 
 class TransactionBase(Transaction):
@@ -29,7 +30,7 @@ class Transaction(TransactionBase):
 
 
 class StockTransaction(TransactionBase):
-    stockId = models.ForeignKey('stock_trading.Stock', on_delete=models.CASCADE)
+    stockId = models.ForeignKey(STOCK_MODEL, on_delete=models.PROTECT)
     quantity = models.IntegerField()
     transaction_type = models.CharField(
         max_length=4,

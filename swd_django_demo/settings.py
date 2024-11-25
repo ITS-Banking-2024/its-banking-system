@@ -201,6 +201,8 @@ CONCRETE_CUSTOMER_MODEL = "customers.Customer"
 
 ACCOUNT_MODEL = "accounts.AccountBase"
 
+STOCK_TRADING_MODEL = "stock_trading.Stock"
+
 TRANSACTION_MODEL = "transactions.TransactionBase"
 
 AUTHENTICATION_BACKENDS = [
