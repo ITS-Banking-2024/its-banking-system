@@ -93,3 +93,7 @@ def history(
     }
 
     return render(request, "accounts/transaction_history.html", context)
+
+@inject
+def savings():
+    pass
