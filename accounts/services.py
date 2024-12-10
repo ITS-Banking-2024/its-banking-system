@@ -3,7 +3,7 @@ from typing import List
 from uuid import UUID
 
 from dependency_injector.wiring import Provide, inject
-from django.db import models
+from django.db import models, transaction
 from marshmallow import ValidationError
 
 from accounts.models import AccountBase, CheckingAccount, SavingsAccount, CustodyAccount
@@ -86,3 +86,43 @@ class AccountService(IAccountService):
             raise ValidationError("Transaction amount must be greater than zero.")
 
         return True
+
+    def deposit_savings(self, account_id: UUID, amount: float):
+        if amount <= 0:
+            raise ValidationError("Deposit amount must be greater than zero.")
+        savings_account = SavingsAccount.objects.filter(account_id=account_id).first()
+        if not savings_account:
+            raise ValidationError(f"Account with ID {account_id} does not exist.")
+        reference_account_id = savings_account.reference_account.account_id
+        try:
+            with transaction.atomic():
+                self.transaction_service.create_new_transaction(
+                    amount=amount,
+                    sending_account_id=reference_account_id,
+                    receiving_account_id=savings_account.account_id,
+                )
+        except Exception as e:
+            raise ValidationError(f"Deposit failed: {str(e)}")
+
+    def withdraw_savings(self, account_id: UUID, amount: float):
+        if amount > self.get_balance(account_id):
+            raise ValidationError(f"Insufficient funds ({self.get_balance(account_id)} EUR) in account: {account_id} to withdraw {amount} EUR")
+
+        if amount <= 0:
+            raise ValidationError("Withdrawal amount must be greater than zero.")
+
+        savings_account = SavingsAccount.objects.filter(account_id=account_id).first()
+        if not savings_account:
+            raise ValidationError(f"Savings account with ID {account_id} does not exist.")
+
+        reference_account_id = savings_account.reference_account.account_id
+
+        try:
+            with transaction.atomic():
+                self.transaction_service.create_new_transaction(
+                    amount=amount,
+                    sending_account_id=savings_account.account_id,
+                    receiving_account_id=reference_account_id,
+                )
+        except Exception as e:
+            raise ValidationError(f"Withdrawal failed: {str(e)}")

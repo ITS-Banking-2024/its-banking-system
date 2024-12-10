@@ -32,6 +32,8 @@ urlpatterns = [
     path("logout/", customers_login, name="logout"),
 
     path('accounts/', include('accounts.urls', namespace='accounts')),
+
+    path('stock_trading/', include('stock_trading.urls', namespace='stock_trading')),
 ]
 
 # Serve static files in development

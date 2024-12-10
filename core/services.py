@@ -80,6 +80,14 @@ class IAccountService(ABC):
     def validate_accounts_for_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
         pass
 
+    @abstractmethod
+    def deposit_savings(self, account_id: UUID, amount: float):
+        pass
+
+    @abstractmethod
+    def withdraw_savings(self, account_id: UUID, amount: float):
+        pass
+
 
 class ICustomerService(ABC):
     @abstractmethod
