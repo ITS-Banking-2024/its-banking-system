@@ -4,7 +4,7 @@ from django.http import HttpRequest
 from django.shortcuts import render
 from marshmallow import ValidationError
 
-from accounts.forms import TransactionForm
+from accounts.forms import TransactionForm, SavingsTransactionForm
 from accounts.models import CheckingAccount, SavingsAccount, CustodyAccount
 from core.services import ITransactionService, IAccountService
 
@@ -95,5 +95,37 @@ def history(
     return render(request, "accounts/transaction_history.html", context)
 
 @inject
-def savings():
-    pass
+def savings(request: HttpRequest, account_id, transaction_service: ITransactionService = Provide["transaction_service"], account_service: IAccountService = Provide["account_service"]):
+    if request.method == "POST":
+        form = SavingsTransactionForm(request.POST)
+        if form.is_valid():
+            savings_account_id = account_id
+            transaction_type = form.cleaned_data["transaction_type"]
+            amount = form.cleaned_data["amount"]
+
+
+            try:
+                if transaction_type == "deposit":
+                    account_service.deposit_savings(savings_account_id, amount)
+                elif transaction_type == "withdraw":
+                    account_service.withdraw_savings(savings_account_id, amount)
+                else:
+                    raise ValidationError("Invalid transaction type.")
+
+                return render(request, "transactions/success_screen.html", {
+                    "success": True,
+                    "message": f"{transaction_type.capitalize()} successful!",
+                    "account_id": account_id
+                })
+
+            except ValidationError as e:
+                return render(request, "transactions/success_screen.html", {
+                    "success": False,
+                    "message": str(e),
+                    "account_id": account_id
+                })
+
+    else:
+        form = SavingsTransactionForm()
+
+    return render(request, "accounts/savings_transaction.html", {"form": form, "account_id": account_id, "balance": account_service.get_balance(account_id)})
