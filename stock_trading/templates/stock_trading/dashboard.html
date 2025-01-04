@@ -1,12 +1,95 @@
-{% extends 'core/base.html' %}
+{% extends "core/base.html" %}
 
 {% block content %}
 <div class="container">
-
     {% if user.is_authenticated %}
-    <h2>Stock Market</h2>
-    {% else %}
-    <div>Please <a href="{% url 'customers:customers_login' %}?next={% url 'customers:dashboard' %}">log in</a></div>
+        <style>
+        .nav-link {
+            cursor: pointer;
+        }
+    </style>
+    <h1>Stock Market Dashboard</h1>
+    <ul class="nav nav-tabs" id="dashboard-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" id="portfolio-tab" onclick="switchTab('portfolio')">Portfolio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="discover-tab" onclick="switchTab('discover')">Discover</a>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-4">
+        <!-- Portfolio Tab -->
+        <div id="portfolio-content" class="tab-pane active">
+            <h2>Your Portfolio</h2>
+            <p><strong>Account Balance:</strong> EUR</p>
+            <p><strong>Total Portfolio Value:</strong> {{ total_portfolio_value }} EUR</p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Stock</th>
+                        <th>Quantity</th>
+                        <th>Current Price</th>
+                        <th>Total Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in portfolio_data %}
+                    <tr>
+                        <td>{{ stock.stock_name }}</td>
+                        <td>{{ stock.quantity }}</td>
+                        <td>{{ stock.current_price }} EUR</td>
+                        <td>{{ stock.total_value }} EUR</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Discover Tab -->
+        <div id="discover-content" class="tab-pane" style="display: none;">
+            <h2>Discover Stocks</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Stock</th>
+                        <th>Current Price</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in available_stocks %}
+                    <tr>
+                        <td>{{ stock.name }}</td>
+                        <td>{{ stock.get_current_stock_price }} EUR</td>
+                        <td>
+                            <form method="post" action="{% url 'stock_trading:buy_stock' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="stock_id" value="{{ stock.id }}">
+                                <input type="number" name="quantity" min="1" class="form-control" placeholder="Quantity">
+                                <button type="submit" class="btn btn-primary mt-1">Buy</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{%else %}
+    <p>
+        Please <a href="{% url 'customers:customers_login' %}">log in</a>.
+    </p>
     {% endif %}
 </div>
+
+<script>
+    function switchTab(tab) {
+        document.getElementById("portfolio-content").style.display = tab === "portfolio" ? "block" : "none";
+        document.getElementById("discover-content").style.display = tab === "discover" ? "block" : "none";
+
+        document.getElementById("portfolio-tab").classList.toggle("active", tab === "portfolio");
+        document.getElementById("discover-tab").classList.toggle("active", tab === "discover");
+    }
+</script>
 {% endblock %}

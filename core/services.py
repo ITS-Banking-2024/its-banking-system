@@ -7,6 +7,7 @@ from django.db import models
 
 from core.models import Product
 from core.models import Account
+from stock_trading.models import Stock
 
 """
 In this code, we are defining the interfaces for the services.
@@ -135,6 +136,14 @@ class ITransactionService(ABC):
 
 # Interface for Trading Service
 class ITradingService(ABC):
+
+    @abstractmethod
+    def get_stock(self, stock_id:UUID) -> Stock:
+        pass
+
+    @abstractmethod
+    def get_all_stocks(self) -> List[Stock]:
+        pass
 
     @abstractmethod
     def buy_stock(self, account_id: UUID, stock_id: UUID, quantity: int) -> bool:
