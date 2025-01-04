@@ -33,21 +33,26 @@ class AccountService(IAccountService):
         return list(AccountBase.objects.filter(customer_id=customer_id))
 
     def get_balance(self, account_id: UUID) -> Decimal:
-        # Fetch opening_balance as Decimal
-        opening_balance = AccountBase.objects.filter(account_id=account_id).first().opening_balance
-        balance = Decimal(opening_balance)
+        account = self.get_account(account_id)
 
-        # Fetch transaction history and calculate the balance
-        transactions = self.transaction_service.get_transaction_history(account_id, "all_time")
-        for transaction in transactions:
-            if transaction["sending_account_id"] == str(account_id):
-                balance -= Decimal(transaction["amount"])
-            elif transaction["receiving_account_id"] == str(account_id):
-                balance += Decimal(transaction["amount"])
-            else:
-                raise ValidationError(f"Transaction not made with this account")
+        if isinstance(account, CustodyAccount):
+            #TODO figure this out
+            return Decimal(0)
+        else:
+            opening_balance = account.opening_balance
+            balance = Decimal(opening_balance)
 
-        return balance.quantize(Decimal("0.01"))  # Round to 2 decimal places
+            # Fetch transaction history and calculate the balance
+            transactions = self.transaction_service.get_transaction_history(account_id, "all_time")
+            for transaction in transactions:
+                if transaction["sending_account_id"] == str(account_id):
+                    balance -= Decimal(transaction["amount"])
+                elif transaction["receiving_account_id"] == str(account_id):
+                    balance += Decimal(transaction["amount"])
+                else:
+                    raise ValidationError(f"Transaction not made with this account")
+
+            return balance.quantize(Decimal("0.01"))  # Round to 2 decimal places
 
     def get_account_totals(self, account_id: UUID, timeframe: str) -> dict:
         total_received = Decimal("0.00")
@@ -72,12 +77,12 @@ class AccountService(IAccountService):
 
     def validate_accounts_for_transaction(self, amount: Decimal, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
         # Validate sending account
-        sending_account = AccountBase.objects.filter(account_id=sending_account_id).first()
+        sending_account = self.get_account(sending_account_id)
         if not sending_account:
             raise ValidationError(f"Sending account with ID {sending_account_id} does not exist.")
 
         # Validate receiving account
-        receiving_account = AccountBase.objects.filter(account_id=receiving_account_id).first()
+        receiving_account = self.get_account(receiving_account_id)
         if not receiving_account:
             raise ValidationError(f"Receiving account with ID {receiving_account_id} does not exist.")
 

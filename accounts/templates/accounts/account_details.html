@@ -23,7 +23,7 @@
     {% if account.type == 'checking' %}
         <a href="{% url 'accounts:new_transaction' account.account_id %}" class="btn btn-primary">New Transaction</a>
     {% elif account.type == 'custody' %}
-         <a href="{% url 'stock_trading:stock_market'%}" class="btn btn-primary">Stock Market</a>
+         <a href="{% url 'stock_trading:stock_market' account.account_id%}" class="btn btn-primary">Stock Market</a>
     {% else %}
         <a href="{% url 'accounts:savings' account.account_id %}" class="btn btn-primary">Deposit/Withdraw Savings</a>
     {% endif %}

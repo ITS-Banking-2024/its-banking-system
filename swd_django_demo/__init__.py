@@ -40,7 +40,8 @@ def wait_for_ready_event(ready_event: threading.Event) -> None:
                                 "orders.dtos",
                                 "customers.views",
                                 "transactions.views",
-                                "accounts.views",])
+                                "accounts.views",
+                                "stock_transactions.views",])
 
     except Exception as e:
         _thread.interrupt_main()
