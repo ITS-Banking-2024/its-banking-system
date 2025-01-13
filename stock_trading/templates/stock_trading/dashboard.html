@@ -52,22 +52,26 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Stock</th>
+                        <th>Stock Symbol</th>
+                        <th>Stock Name</th>
                         <th>Current Price</th>
+                        <th>Number Available</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for stock in available_stocks %}
                     <tr>
+                        <td>{{ stock.symbol }}</td>
                         <td>{{ stock.name }}</td>
-                        <td>{{ stock.get_current_stock_price }} EUR</td>
+                        <td>{{ stock.current_price }}</td>
+                        <td>{{ stock.number_available }}</td>
                         <td>
-                            <form method="post" action="{% url 'stock_trading:buy_stock' %}">
+                            <form method="post" action="{% url 'stock_trading:buy_stock' account_id=account_id %}" class="d-inline-flex align-items-center">
                                 {% csrf_token %}
                                 <input type="hidden" name="stock_id" value="{{ stock.id }}">
-                                <input type="number" name="quantity" min="1" class="form-control" placeholder="Quantity">
-                                <button type="submit" class="btn btn-primary mt-1">Buy</button>
+                                <input type="number" name="quantity" min="1" max="{{ stock.number_available }}" class="form-control form-control-sm me-2" placeholder="Quantity" style="min-width: 120px;">
+                                <button type="submit" class="btn btn-primary btn-sm">Buy</button>
                             </form>
                         </td>
                     </tr>

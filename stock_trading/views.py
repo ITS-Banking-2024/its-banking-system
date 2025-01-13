@@ -10,19 +10,23 @@ from accounts.models import AccountBase
 from core.services import ITradingService
 from stock_trading.forms import BuyStockForm
 from stock_trading.models import StockOwnership
-
+from django.apps import apps
 
 # Create your views here.
 
+@inject
 def stock_market(request: HttpRequest, account_id, trading_service: ITradingService = Provide["trading_service"]):
     account = AccountBase.objects.filter(account_id=account_id).first()
     if not account:
         raise ValidationError("No account found.")
 
+    available_stocks = trading_service.get_all_available_stocks()
+
     ownerships = StockOwnership.objects.filter(account=account)
     stocks = [
         {
             "name": ownership.stock.name,
+            "symbol": ownership.stock.symbol,
             "quantity": ownership.quantity,
             "current_price": ownership.stock.get_current_stock_price(),
             "total_value": ownership.quantity * ownership.stock.get_current_stock_price(),
@@ -35,6 +39,7 @@ def stock_market(request: HttpRequest, account_id, trading_service: ITradingServ
         "account_id": account_id,
         "stocks": stocks,
         "total_value": total_value,
+        "available_stocks": available_stocks
     })
 
 def buy_stock(request, account_id, trading_service: ITradingService = Provide["trading_service"]):
