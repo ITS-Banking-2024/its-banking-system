@@ -142,7 +142,11 @@ class ITradingService(ABC):
         pass
 
     @abstractmethod
-    def get_all_stocks(self) -> List[Stock]:
+    def get_all_user_stocks(self, account_id: UUID) -> List[Stock]:
+        pass
+
+    @abstractmethod
+    def get_all_available_stocks(self):
         pass
 
     @abstractmethod

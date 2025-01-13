@@ -201,7 +201,13 @@ CONCRETE_CUSTOMER_MODEL = "customers.Customer"
 
 ACCOUNT_MODEL = "accounts.AccountBase"
 
+CHECKING_ACCOUNT_MODEL = "accounts.CheckingAccount"
+
+CUSTODY_ACCOUNT_MODEL = "accounts.CustodyAccount"
+
 STOCK_MODEL = "stock_trading.Stock"
+
+STOCK_OWNERSHIP_MODEL = "stock_trading.StockOwnership"
 
 TRANSACTION_MODEL = "transactions.TransactionBase"
 

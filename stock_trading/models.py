@@ -9,6 +9,7 @@ class Stock(AbstractStock):
 
     objects : StockManager = StockManager()
 
+    symbol = models.CharField(max_length=10)
     last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
