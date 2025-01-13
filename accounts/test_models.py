@@ -147,3 +147,45 @@ class TestAccounts(TestCase):
         # Verify that the custody account was deleted
         retrieved_account = CustodyAccount.objects.get_by_account_id(custody_account.account_id)
         self.assertIsNone(retrieved_account)
+
+    def test_opening_balance_is_zero_on_checking_account(self):
+        # Create a CheckingAccount instance for the customer
+        checking_account = CheckingAccount.objects.create(
+            customer_id=self.customer,
+            PIN="1234"
+        )
+
+        # Verify that the opening balance is zero
+        self.assertEqual(checking_account.opening_balance, 0.00)
+
+    def test_opening_balance_is_zero_on_savings_account(self):
+        # Create a CheckingAccount instance for the customer
+        checking_account = CheckingAccount.objects.create(
+            customer_id=self.customer,
+            PIN="1234"
+        )
+
+        # Create a SavingsAccount instance with the reference account
+        savings_account = SavingsAccount.objects.create(
+            customer_id=self.customer,
+            reference_account=checking_account
+        )
+
+        # Verify that the opening balance is zero
+        self.assertEqual(savings_account.opening_balance, 0.00)
+
+    def test_opening_balance_is_zero_on_custody_account(self):
+        # Create a CheckingAccount instance for the customer
+        checking_account = CheckingAccount.objects.create(
+            customer_id=self.customer,
+            PIN="1234"
+        )
+
+        # Create a CustodyAccount instance with the reference account
+        custody_account = CustodyAccount.objects.create(
+            customer_id=self.customer,
+            reference_account=checking_account
+        )
+
+        # Verify that the opening balance is zero
+        self.assertEqual(custody_account.opening_balance, 0.00)
