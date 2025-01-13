@@ -7,8 +7,7 @@ from uuid import uuid4
 from unittest.mock import MagicMock
 
 from core.models import Account
-from swd_django_demo.settings import CUSTOMER_MODEL
-from core.services import IAccountService
+from core.services import IAccountService, ICustomerService
 from django.apps import apps
 
 
@@ -23,37 +22,38 @@ class TestContainer(containers.DeclarativeContainer):
         spec=Account
     )
 
+    customer_service = providers.Singleton(
+        MagicMock,
+        spec=ICustomerService
+        )
+
 class DashboardTests(TestCase):
 
     def setUp(self):
-        # Create UUIDs for accounts and customer
-        account_id_1 = uuid4()
-        account_id_2 = uuid4()
-        customer_id = uuid4()
+        self.customer_id = uuid4()
+
+        self.account_id = uuid4()
 
         self.mock_account_list = [
-            TestContainer.account_factory(account_id=account_id_1, type="checking", customer_id=customer_id),
-            TestContainer.account_factory(account_id=account_id_2, type="savings", customer_id=customer_id),
+            {"account_id": uuid4(), "type": "checking", "balance": 1000, "customer_id": self.customer_id},
+            {"account_id": uuid4(), "type": "savings", "balance": 2000, "customer_id": self.customer_id}
         ]
 
-        # Create an instance of the test container
-        self.container = TestContainer()
 
-        # Retrieve the actual service instance from the Singleton provider
-        account_service = self.container.account_service()
+        c = TestContainer()
+        c.customer_service().get_customer_accounts.return_value = self.mock_account_list
+        c.wire(modules=["customers.views"])
 
-        # Mock the `get_customer_accounts` method
-        account_service.get_accounts_by_customer_id.return_value = self.mock_account_list
 
-        # Wire the view to use the TestContainer dependencies
-        self.container.wire(modules=["customers.views"])
+        # Mock user
+        with patch('django.apps.apps.get_model') as mock_get_model:
+            self.mock_user = MagicMock()
+            self.mock_user.id = self.customer_id
+            self.mock_user.customer_id = self.customer_id
+            mock_get_model.return_value.objects.create_user.return_value = self.mock_user
 
-        # Create a test user
-        User = apps.get_model(CUSTOMER_MODEL)
-        self.customer = User.objects.create_user(username="testuser", password="testpassword", email="email@email.com")
-        self.customer.customer_id = customer_id
-
-        # Log in the user using the test client
+        # Authenticate the mock user
+        self.customer = self.mock_user
         self.client.login(username="testuser", password="testpassword")
 
     def test_dashboard(self):
@@ -67,9 +67,9 @@ class DashboardTests(TestCase):
          # Assert that the redirect location is the login page
         self.assertRedirects(response, f"{reverse('customers:customers_login')}?next={reverse('customers:dashboard')}")
 
-    def test_dashboard_authenticated(self):
+    def test_dashboard_authenticated_no_accounts(self):
         # Mock the authenticated user
-        with patch("django.contrib.auth.get_user", return_value=self.customer):
+        with patch("django.contrib.auth.get_user", return_value=self.mock_user):
             # Simulate a GET request
             response = self.client.get(reverse("customers:dashboard"))
 
@@ -77,8 +77,26 @@ class DashboardTests(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertTemplateUsed(response, "customers/dashboard.html")
 
-            # Verify context contains the expected accounts
-            context_accounts = response.context["customer_accounts"]
+    def test_dashboard_authenticated_with_accounts(self):
+        # Mock the authenticated user and accounts
+        with patch("django.contrib.auth.get_user", return_value=self.mock_user), \
+            patch("core.services.ICustomerService.get_customer_accounts", return_value=self.mock_account_list):
+
+            # Simulate a GET request
+            response = self.client.get(reverse("customers:dashboard"))
+
+            # Debugging step: print context
+            print("Response context:", response.context)
+
+            # Verify status code and template
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, "customers/dashboard.html")
+
+            # Verify the context contains user accounts
+            context_accounts = response.context.get("customer_accounts", [])
+            print("Context accounts : ", context_accounts)
+            self.assertEqual(context_accounts, self.mock_account_list)
+            self.assertEqual(len(context_accounts), 2)
 
             for mock_account, context_account in zip(self.mock_account_list, context_accounts):
                 # Assert account IDs are the same

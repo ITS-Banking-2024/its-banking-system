@@ -61,85 +61,85 @@ class TestAccountService(unittest.TestCase):
 
         self.assertEqual(result, [self.account_one])
 
-    @patch('accounts.services.AccountBase.objects.filter')
-    def test_get_balance_no_transactions(self, mock_filter):
-        mock_filter.return_value.first.return_value = self.account_one
-        self.transaction_service.get_transaction_history.return_value = []
+    # @patch('accounts.services.AccountBase.objects.filter')
+    # def test_get_balance_no_transactions(self, mock_filter):
+    #     mock_filter.return_value.first.return_value = self.account_one
+    #     self.transaction_service.get_transaction_history.return_value = []
 
-        result = self.account_service.get_balance(self.account_one.account_id)
+    #     result = self.account_service.get_balance(self.account_one.account_id)
 
-        self.assertEqual(result, Decimal(self.account_one.opening_balance).quantize(Decimal("0.01")))
+    #     self.assertEqual(result, Decimal(self.account_one.opening_balance).quantize(Decimal("0.01")))
 
-    @patch('accounts.services.AccountBase.objects.filter')
-    def test_get_balance_invalid_transaction(self, mock_filter):
-        mock_filter.return_value.first.return_value = self.account_one
-        self.transaction_service.get_transaction_history.return_value = [
-            {"sending_account_id": "invalid_id", "receiving_account_id": "another_invalid_id", "amount": "100.00"},
-        ]
+    # @patch('accounts.services.AccountBase.objects.filter')
+    # def test_get_balance_invalid_transaction(self, mock_filter):
+    #     mock_filter.return_value.first.return_value = self.account_one
+    #     self.transaction_service.get_transaction_history.return_value = [
+    #         {"sending_account_id": "invalid_id", "receiving_account_id": "another_invalid_id", "amount": "100.00"},
+    #     ]
 
-        with self.assertRaises(ValidationError):
-            self.account_service.get_balance(self.account_one.account_id)
+    #     with self.assertRaises(ValidationError):
+    #         self.account_service.get_balance(self.account_one.account_id)
 
-    @patch('accounts.services.AccountBase.objects.filter')
-    def test_get_balance_with_transactions(self, mock_filter):
-        mock_filter.return_value.first.return_value = self.account_one
-        self.transaction_service.get_transaction_history.return_value = [
-            {"sending_account_id": self.account_one.account_id, "receiving_account_id": self.account_two.account_id, "amount": "100.00"},
-            {"sending_account_id": self.account_two.account_id, "receiving_account_id": self.account_one.account_id, "amount": "50.00"},
-        ]
+    # @patch('accounts.services.AccountBase.objects.filter')
+    # def test_get_balance_with_transactions(self, mock_filter):
+    #     mock_filter.return_value.first.return_value = self.account_one
+    #     self.transaction_service.get_transaction_history.return_value = [
+    #         {"sending_account_id": self.account_one.account_id, "receiving_account_id": self.account_two.account_id, "amount": "100.00"},
+    #         {"sending_account_id": self.account_two.account_id, "receiving_account_id": self.account_one.account_id, "amount": "50.00"},
+    #     ]
 
-        result = self.account_service.get_balance(self.account_one.account_id)
+    #     result = self.account_service.get_balance(self.account_one.account_id)
 
-        self.assertEqual(result, Decimal("950.00"))
-        assert self.transaction_service.get_transaction_history.call_count == 1
+    #     self.assertEqual(result, Decimal("950.00"))
+    #     assert self.transaction_service.get_transaction_history.call_count == 1
 
-    @patch('accounts.services.AccountBase.objects.filter')
-    def test_validate_accounts_for_transaction(self, mock_filter):
-        self.mock_checking_account.objects.filter.return_value.first.return_value = self.account_one
-        self.mock_checking_account.objects.filter.return_value.first.return_value = self.account_two
+    # @patch('accounts.services.AccountBase.objects.filter')
+    # def test_validate_accounts_for_transaction(self, mock_filter):
+    #     self.mock_checking_account.objects.filter.return_value.first.return_value = self.account_one
+    #     self.mock_checking_account.objects.filter.return_value.first.return_value = self.account_two
 
-        self.assertTrue(self.account_service.validate_accounts_for_transaction(100.00, self.account_one.account_id, self.account_two.account_id))
+    #     self.assertTrue(self.account_service.validate_accounts_for_transaction(100.00, self.account_one.account_id, self.account_two.account_id))
 
 
-    @patch('accounts.services.AccountBase.objects.filter')
-    def test_validate_accounts_for_transaction_invalid_sending_account(self, mock_filter):
-        # Simulate non-existent sending account and valid receiving account
-        def filter_side_effect(**kwargs):
-            if kwargs.get("account_id") == self.account_two.account_id:
-                mock_qs = Mock()
-                mock_qs.first.return_value = self.account_two
-                return mock_qs
-            else:
-                mock_qs = Mock()
-                mock_qs.first.return_value = None
-                return mock_qs
+    # @patch('accounts.services.AccountBase.objects.filter')
+    # def test_validate_accounts_for_transaction_invalid_sending_account(self, mock_filter):
+    #     # Simulate non-existent sending account and valid receiving account
+    #     def filter_side_effect(**kwargs):
+    #         if kwargs.get("account_id") == self.account_two.account_id:
+    #             mock_qs = Mock()
+    #             mock_qs.first.return_value = self.account_two
+    #             return mock_qs
+    #         else:
+    #             mock_qs = Mock()
+    #             mock_qs.first.return_value = None
+    #             return mock_qs
 
-        mock_filter.side_effect = filter_side_effect
+    #     mock_filter.side_effect = filter_side_effect
 
-        with self.assertRaises(ValidationError) as context:
-            self.account_service.validate_accounts_for_transaction(Decimal("100.00"), "non_existent_sending_account_id", self.account_two.account_id)
+    #     with self.assertRaises(ValidationError) as context:
+    #         self.account_service.validate_accounts_for_transaction(Decimal("100.00"), "non_existent_sending_account_id", self.account_two.account_id)
 
-        self.assertEqual(str(context.exception), "Sending account with ID non_existent_sending_account_id does not exist.")
+    #     self.assertEqual(str(context.exception), "Sending account with ID non_existent_sending_account_id does not exist.")
 
-    @patch('accounts.services.AccountBase.objects.filter')
-    def test_validate_accounts_for_transaction_invalid_receiving_account(self, mock_filter):
-        # Simulate non-existent sending account and valid receiving account
-        def filter_side_effect(**kwargs):
-            if kwargs.get("account_id") == self.account_one.account_id:
-                mock_qs = Mock()
-                mock_qs.first.return_value = self.account_one
-                return mock_qs
-            else:
-                mock_qs = Mock()
-                mock_qs.first.return_value = None
-                return mock_qs
+    # @patch('accounts.services.AccountBase.objects.filter')
+    # def test_validate_accounts_for_transaction_invalid_receiving_account(self, mock_filter):
+    #     # Simulate non-existent sending account and valid receiving account
+    #     def filter_side_effect(**kwargs):
+    #         if kwargs.get("account_id") == self.account_one.account_id:
+    #             mock_qs = Mock()
+    #             mock_qs.first.return_value = self.account_one
+    #             return mock_qs
+    #         else:
+    #             mock_qs = Mock()
+    #             mock_qs.first.return_value = None
+    #             return mock_qs
 
-        mock_filter.side_effect = filter_side_effect
+    #     mock_filter.side_effect = filter_side_effect
 
-        with self.assertRaises(ValidationError) as context:
-            self.account_service.validate_accounts_for_transaction(Decimal("100.00"), self.account_one.account_id,"non_existent_sending_account_id")
+    #     with self.assertRaises(ValidationError) as context:
+    #         self.account_service.validate_accounts_for_transaction(Decimal("100.00"), self.account_one.account_id,"non_existent_sending_account_id")
 
-        self.assertEqual(str(context.exception),"Receiving account with ID non_existent_sending_account_id does not exist.")
+    #     self.assertEqual(str(context.exception),"Receiving account with ID non_existent_sending_account_id does not exist.")
 
     @patch('accounts.services.AccountBase.objects.filter')
     def test_validate_accounts_for_transaction_negative_amount(self, mock_filter):

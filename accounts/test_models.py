@@ -174,7 +174,7 @@ class TestAccounts(TestCase):
         # Verify that the opening balance is zero
         self.assertEqual(savings_account.opening_balance, 0.00)
 
-    def test_opening_balance_is_zero_on_custody_account(self):
+    def test_reference_custody_account(self):
         # Create a CheckingAccount instance for the customer
         checking_account = CheckingAccount.objects.create(
             customer_id=self.customer,
@@ -188,4 +188,4 @@ class TestAccounts(TestCase):
         )
 
         # Verify that the opening balance is zero
-        self.assertEqual(custody_account.opening_balance, 0.00)
+        self.assertEqual(custody_account.reference_account, checking_account)
