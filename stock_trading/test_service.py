@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch, MagicMock
 from uuid import uuid4
 from decimal import Decimal
 
-from stock_trading.services import TradingService
+from stock_trading.services import TradingService, fetch_stock_price
 from stock_trading.models import Stock, StockOwnership
 from marshmallow import ValidationError
 from core.models import Account
@@ -174,3 +174,10 @@ class TestStockTrading(unittest.TestCase):
                 self.trading_service.buy_stock(self.account_uuid, self.stock_one_uuid, 2)
 
             self.assertIn("Stock purchase failed: Unexpected error", str(context.exception))
+
+    def test_get_current_stock_price(self):
+
+        result = self.trading_service.get_current_stock_price(self.mock_stock.symbol)
+
+        current_price = fetch_stock_price(self.mock_stock.symbol)
+        self.assertEqual(result, current_price)
