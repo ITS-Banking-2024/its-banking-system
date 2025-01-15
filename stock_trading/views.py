@@ -15,6 +15,11 @@ from django.apps import apps
 # Create your views here.
 
 @inject
+def dashboard_view(request):
+    return render(request, "stock_trading/dashboard.html")
+
+
+@inject
 def stock_market(request: HttpRequest, account_id, trading_service: ITradingService = Provide["trading_service"]):
     account = AccountBase.objects.filter(account_id=account_id).first()
     if not account:
