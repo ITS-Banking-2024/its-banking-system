@@ -181,3 +181,10 @@ class TestStockTrading(unittest.TestCase):
 
         current_price = fetch_stock_price(self.mock_stock.symbol)
         self.assertEqual(result, current_price)
+
+    def test_get_current_stock_price_failed(self):
+        not_existing_stock = "NOT_EXISTING_STOCK"
+        with self.assertRaises(ValidationError) as context:
+            self.trading_service.get_current_stock_price(not_existing_stock)
+
+        self.assertIn(f"Failed to fetch stock price for {not_existing_stock}", str(context.exception))
