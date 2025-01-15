@@ -93,3 +93,84 @@ class TestStockTrading(unittest.TestCase):
                 self.trading_service.get_all_available_stocks()
 
             self.assertIn("Failed to fetch available stocks: Failed to fetch stocks", str(context.exception))
+
+    def test_buy_stock_negative_quantity(self):
+        with self.assertRaises(ValidationError) as context:
+            self.trading_service.buy_stock(self.account_uuid, self.stock_one_uuid, -10)
+
+        self.assertIn("Quantity must be greater than zero.", str(context.exception))
+
+    def test_buy_stock_account_not_found(self):
+        # simulate random account id, so that the account is not found - using while to make sure we have different account id
+        while True:
+            random_account_id = uuid4()
+            if random_account_id != self.account_uuid:
+                break
+
+        with self.assertRaises(ValidationError) as context:
+            self.trading_service.buy_stock(
+                account_id=random_account_id, stock_id=self.stock_one_uuid, quantity=10
+            )
+            # Assert the correct error message
+            self.assertIn("Account not found.", str(context.exception))
+
+    @patch("stock_trading.models.Stock.objects.get")
+    def test_buy_stock_insufficient_funds(self, mock_get_stock):
+        self.account.opening_balance = Decimal("100.00")
+
+        mock_get_stock.return_value.current_price = Decimal("150.00")
+
+        with self.assertRaises(ValidationError) as context:
+            self.trading_service.buy_stock(self.account_uuid, self.stock_one_uuid, 10)
+
+            self.assertIn("Insufficient funds to buy stock.", str(context.exception))
+
+
+
+    @patch("stock_trading.models.StockOwnership.objects.get_or_create")
+    @patch("stock_trading.models.Stock.objects.get")
+    @patch("accounts.models.CheckingAccount.objects.filter")
+    @patch("stock_trading.services.fetch_stock_price")
+    def test_buy_stock_success(self, mock_fetch_stock_price, mock_account_filter, mock_get_stock, mock_get_or_create):
+        # stock_price
+        mock_fetch_stock_price.return_value = Decimal("150.00")
+
+        # account
+        mock_account_filter.return_value.first.return_value = self.account
+
+        # stokc_details
+        mock_get_stock.return_value = self.stock_one
+
+        # ownership
+        mock_get_or_create.return_value = (self.mock_ownership, True)
+
+        result = self.trading_service.buy_stock(self.account_uuid, self.stock_one_uuid, 2)
+
+        # assertions
+        self.assertTrue(result)
+        self.assertEqual(self.account.opening_balance, Decimal("700.00"))  # 1000 - (2 * 150)
+        mock_fetch_stock_price.assert_called_once_with("AAPL")
+        mock_account_filter.assert_called_once_with(account_id=self.account_uuid)
+        mock_get_stock.assert_called_once_with(pk=self.stock_one_uuid)
+        mock_get_or_create.assert_called_once_with(account=self.account, stock=self.stock_one)
+
+
+    @patch("stock_trading.models.Stock.objects.get")
+    @patch("accounts.models.CheckingAccount.objects.filter")
+    @patch("stock_trading.services.fetch_stock_price")
+    def test_buy_stock_failed(self, mock_fetch_stock_price, mock_account_filter, mock_get_stock):
+        # price
+        mock_fetch_stock_price.return_value = Decimal("150.00")
+
+        # account
+        mock_account_filter.return_value.first.return_value = self.account
+
+        # stock details
+        mock_get_stock.return_value = self.stock_one
+
+        # simulate transaction failed to some reason
+        with patch("stock_trading.models.StockOwnership.objects.get_or_create", side_effect=Exception("Unexpected error")):
+            with self.assertRaises(ValidationError) as context:
+                self.trading_service.buy_stock(self.account_uuid, self.stock_one_uuid, 2)
+
+            self.assertIn("Stock purchase failed: Unexpected error", str(context.exception))
