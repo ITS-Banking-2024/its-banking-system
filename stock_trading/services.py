@@ -95,7 +95,8 @@ class TradingService(ITradingService):
                     "number_available": ownership.quantity,
                 })
             return available_stocks
-
+        except ValidationError:
+            raise
         except Exception as e:
             raise ValidationError(f"Failed to fetch available stocks: {str(e)}")
 
@@ -148,7 +149,6 @@ class TradingService(ITradingService):
                 ownership.save()
 
             return True
-
         except Exception as e:
             raise ValidationError(f"Stock purchase failed: {str(e)}")
 
