@@ -47,7 +47,7 @@ class Container(containers.DeclarativeContainer):
     )
 
     trading_service = providers.Singleton(
-        TradingService,
+        TradingService, transaction_service=transaction_service, account_service=account_service
     )
 
     # Singleton provider for OrderService with product_service as a dependency

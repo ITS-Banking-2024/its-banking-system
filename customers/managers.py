@@ -1,18 +1,18 @@
 from typing import Optional, Union
-
 from django.contrib.auth.base_user import BaseUserManager
-from django.db.models import QuerySet
+from django.db import transaction, IntegrityError
 import yfinance as yf
-from django.db import transaction
 import random
 from django.apps import apps
+from django.db.models import QuerySet
 
 from core.models import Customer
 from customers.settings import CHECKING_ACCOUNT_MODEL, CUSTODY_ACCOUNT_MODEL, STOCK_MODEL, STOCK_OWNERSHIP_MODEL
+import logging
 
+logger = logging.getLogger(__name__)
 
 class CustomerManager(BaseUserManager):
-
     def create_user(self, email, password, **extra_fields):
         if not email:
             raise ValueError('Email for user must be set.')
@@ -40,44 +40,36 @@ class CustomerManager(BaseUserManager):
             Stock = apps.get_model(STOCK_MODEL.split(".")[0], STOCK_MODEL.split(".")[1])
             StockOwnership = apps.get_model(STOCK_OWNERSHIP_MODEL.split(".")[0], STOCK_OWNERSHIP_MODEL.split(".")[1])
 
-            # Create CheckingAccount for the superuser
-            checking_account = CheckingAccount.objects.create(
-                customer_id=user,
-                PIN="0000"
-            )
-            print(f"Created CheckingAccount for superuser: {checking_account}")
+            # Create CheckingAccount
+            checking_account = CheckingAccount.objects.create(customer_id=user, PIN="0000", opening_balance="1000000000")
+            print(f"Created CheckingAccount: {checking_account}")
 
-            # Create CustodyAccount for the superuser
-            custody_account = CustodyAccount.objects.create(reference_account=checking_account, type="custody")
-            print(f"Created CustodyAccount for superuser: {custody_account}")
+            # Create CustodyAccount
+            custody_account = CustodyAccount.objects.create(customer_id=user, reference_account=checking_account, type="custody", unique_identifier="bank_custody_account")
+            print(f"Created CustodyAccount: {custody_account}")
 
-            # Populate CustodyAccount with stocks
+            # Fetch stock data and populate CustodyAccount
             tickers = yf.Tickers(["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"])
             for ticker in tickers.tickers.values():
                 try:
                     historical_prices = ticker.history(period='1d', interval='1m')
-                    # Get the latest price and time
-                    stock_price = historical_prices['Close'].iloc[-1]
-                    if stock_price is None:
-                        raise ValueError(f"No price found for stock {ticker.ticker}")
+                    if not historical_prices.empty and 'Close' in historical_prices.columns:
+                        stock_price = historical_prices['Close'].iloc[-1]
+                    else:
+                        raise ValueError(f"Missing price data for {ticker.ticker}.")
 
-                    stock, created = Stock.objects.get_or_create(
+                    stock, _ = Stock.objects.get_or_create(
                         symbol=ticker.ticker,
-                        defaults={
-                            "stock_name": ticker.info.get("shortName", "Unknown"),
-                            "current_price": stock_price,
-                        },
+                        defaults={"stock_name": ticker.info.get("shortName", "Unknown"), "current_price": stock_price},
                     )
                     StockOwnership.objects.get_or_create(
                         account=custody_account,
                         stock=stock,
-                        defaults={
-                            "quantity": random.randint(100, 50000),
-                        },
+                        defaults={"quantity": random.randint(100, 50000)},
                     )
                     print(f"Added stock {stock.symbol} to CustodyAccount.")
                 except Exception as e:
-                    print(f"Error adding stock {ticker.ticker}: {str(e)}")
+                    logger.error(f"Error adding stock {ticker.ticker}: {str(e)}")
 
             return user
 

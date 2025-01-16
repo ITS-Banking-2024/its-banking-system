@@ -1,9 +1,9 @@
-from decimal import Decimal
 from typing import List
 from uuid import UUID
 
 from dependency_injector.wiring import Provide, inject
 from django.db import models, transaction
+from django.db.models.sql import Query
 from marshmallow import ValidationError
 
 from accounts.models import AccountBase, CheckingAccount, SavingsAccount, CustodyAccount
@@ -32,50 +32,59 @@ class AccountService(IAccountService):
     def get_accounts_by_customer_id(self, customer_id: UUID) -> models.QuerySet:
         return list(AccountBase.objects.filter(customer_id=customer_id))
 
-    def get_balance(self, account_id: UUID) -> Decimal:
+    def get_bank_custody_account(self):
+        try:
+            # Fetch using the unique identifier
+            bank_custody_account = CustodyAccount.objects.get(unique_identifier="bank_custody_account")
+            return bank_custody_account
+        except CustodyAccount.DoesNotExist:
+            raise ValueError("Bank custody account is not set up. Please check the database configuration.")
+
+    def get_balance(self, account_id: UUID) -> float:
         account = self.get_account(account_id)
 
         if isinstance(account, CustodyAccount):
             #TODO figure this out
-            return Decimal(0)
+            return 0.0
         else:
             opening_balance = account.opening_balance
-            balance = Decimal(opening_balance)
+            balance = float(opening_balance)
 
             # Fetch transaction history and calculate the balance
             transactions = self.transaction_service.get_transaction_history(account_id, "all_time")
             for transaction in transactions:
                 if transaction["sending_account_id"] == str(account_id):
-                    balance -= Decimal(transaction["amount"])
+                    balance -= float(transaction["amount"])
                 elif transaction["receiving_account_id"] == str(account_id):
-                    balance += Decimal(transaction["amount"])
+                    balance += float(transaction["amount"])
                 else:
                     raise ValidationError(f"Transaction not made with this account")
 
-            return balance.quantize(Decimal("0.01"))  # Round to 2 decimal places
+            return round(balance, 2)
 
     def get_account_totals(self, account_id: UUID, timeframe: str) -> dict:
-        total_received = Decimal("0.00")
-        total_sent = Decimal("0.00")
+        total_received = 0.0
+        total_sent = 0.0
 
         transaction_history = self.transaction_service.get_transaction_history(account_id, timeframe)
 
         # Calculate total sent and received amounts
         for transaction in transaction_history:
             if str(transaction["sending_account_id"]) == str(account_id):
-                total_sent += Decimal(transaction["amount"])
+                total_sent += float(transaction["amount"])
             elif str(transaction["receiving_account_id"]) == str(account_id):
-                total_received += Decimal(transaction["amount"])
+                total_received += float(transaction["amount"])
             else:
                 raise ValidationError(f"Rogue transaction.")
 
         # Round totals to 2 decimal places
-        total_sent = total_sent.quantize(Decimal("0.01"))
-        total_received = total_received.quantize(Decimal("0.01"))
+        total_sent = round(total_sent, 2)
+        total_received = round(total_received, 2)
 
         return {"total_sent": total_sent, "total_received": total_received}
 
-    def validate_accounts_for_transaction(self, amount: Decimal, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
+    def validate_accounts_for_transaction(self, amount: float, sending_account_id: UUID,
+                                          receiving_account_id: UUID) -> bool:
         # Validate sending account
         sending_account = self.get_account(sending_account_id)
         if not sending_account:
@@ -87,8 +96,17 @@ class AccountService(IAccountService):
             raise ValidationError(f"Receiving account with ID {receiving_account_id} does not exist.")
 
         # Validate the transaction amount
-        if amount <= Decimal(0):
+        if amount <= 0:
             raise ValidationError("Transaction amount must be greater than zero.")
+
+        overdraft_limit = 1000.00  # Overdraft limit in float
+
+        # Calculate the current balance of the sending account
+        current_balance = self.get_balance(sending_account_id)
+
+        # Check if the transaction exceeds the overdraft limit
+        if current_balance - amount + overdraft_limit < 0:
+            raise ValidationError(f"Overdraft limit ({overdraft_limit}) overreached")
 
         return True
 

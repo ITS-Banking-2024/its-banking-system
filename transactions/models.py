@@ -29,8 +29,12 @@ class Transaction(TransactionBase):
         db_table = "transaction"
 
 
-class StockTransaction(TransactionBase):
-    stockId = models.ForeignKey(STOCK_MODEL, on_delete=models.PROTECT)
+class StockTransaction(Transaction):
+    stockId = models.UUIDField(
+        null=True,
+        blank=True,
+        help_text="Stock Id"
+    )
     quantity = models.IntegerField()
     transaction_type = models.CharField(
         max_length=4,
@@ -41,7 +45,7 @@ class StockTransaction(TransactionBase):
         db_table = "transaction_stock"
 
 
-class ATMTransaction(TransactionBase):
+class ATMTransaction(Transaction):
     atmId = models.UUIDField(
         default=uuid.uuid4,
         editable=False,
