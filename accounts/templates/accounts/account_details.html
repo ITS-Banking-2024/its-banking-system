@@ -13,22 +13,25 @@
             <th>Type</th>
             <td>{{ account.type }}</td>
         </tr>
-        <tr>
+        {% if  account.type != 'custody'%}
+            <tr>
             <th>Balance</th>
             <td>{{ balance }} EUR</td>
         </tr>
+        {% endif %}
         <!-- Add more fields as required -->
     </table>
 
     {% if account.type == 'checking' %}
         <a href="{% url 'accounts:new_transaction' account.account_id %}" class="btn btn-primary">New Transaction</a>
+        <a href="{% url 'accounts:history' account.account_id %}" class="btn btn-secondary">Transaction History</a>
     {% elif account.type == 'custody' %}
-         <a href="{% url 'stock_trading:stock_market' account.account_id%}" class="btn btn-primary">Stock Market</a>
+        <a href="{% url 'stock_trading:stock_market' account.account_id%}" class="btn btn-primary">Stock Market</a>
+        <a href="{% url 'stock_trading:history' account.account_id %}" class="btn btn-secondary">Stock Transaction History</a>
     {% else %}
         <a href="{% url 'accounts:savings' account.account_id %}" class="btn btn-primary">Deposit/Withdraw Savings</a>
     {% endif %}
 
-    <a href="{% url 'accounts:history' account.account_id %}" class="btn btn-secondary">Transaction History</a>
     <a href="{% url 'customers:dashboard' %}" class="btn btn-secondary">Back to Customer Dashboard</a>
     {% else %}
     <p>

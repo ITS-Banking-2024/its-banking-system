@@ -1,59 +1,112 @@
-from django.shortcuts import render, redirect
-
 # Create your views here.
+
 from dependency_injector.wiring import inject, Provide
-from django.http import HttpResponse, HttpRequest
-from django.template import loader
+from django.http import HttpRequest, Http404
+from django.shortcuts import get_object_or_404
+from django.shortcuts import render, redirect
 from marshmallow import ValidationError
 
-from accounts.models import AccountBase
-from core.services import ITradingService
+from core.services import ITradingService, ITransactionService, IAccountService
 from stock_trading.forms import BuyStockForm
-from stock_trading.models import StockOwnership
-from django.apps import apps
+from stock_trading.models import Stock
 
-# Create your views here.
+
 
 @inject
-def stock_market(request: HttpRequest, account_id, trading_service: ITradingService = Provide["trading_service"]):
-    account = AccountBase.objects.filter(account_id=account_id).first()
+def stock_market(request: HttpRequest, account_id, trading_service: ITradingService = Provide["trading_service"], account_service: IAccountService = Provide["account_service"]):
+    account = account_service.get_account(account_id)
     if not account:
         raise ValidationError("No account found.")
 
     available_stocks = trading_service.get_all_available_stocks()
+    if not available_stocks:
+        print("No available stocks.")
 
-    ownerships = StockOwnership.objects.filter(account=account)
-    stocks = [
-        {
-            "name": ownership.stock.name,
-            "symbol": ownership.stock.symbol,
-            "quantity": ownership.quantity,
-            "current_price": ownership.stock.get_current_stock_price(),
-            "total_value": ownership.quantity * ownership.stock.get_current_stock_price(),
-        }
-        for ownership in ownerships
-    ]
-    total_value = sum(stock["total_value"] for stock in stocks)
+    portfolio = trading_service.get_all_user_stocks(account_id)
+    if not portfolio:
+        print("No user portfolio.")
 
     return render(request, "stock_trading/dashboard.html", {
-        "account_id": account_id,
-        "stocks": stocks,
-        "total_value": total_value,
+        "account_id": str(account_id),
+        "available_funds": account_service.get_balance(account.reference_account_id),
+        "portfolio": portfolio,
+        "total_portfolio_value": trading_service.get_portfolio_value(account_id),
         "available_stocks": available_stocks
     })
 
-def buy_stock(request, account_id, trading_service: ITradingService = Provide["trading_service"]):
+@inject
+def buy_stock(
+    request,
+    account_id,
+    stock_id,
+    trading_service: ITradingService = Provide["trading_service"],
+    account_service: IAccountService = Provide["account_service"]
+):
+    stock = trading_service.get_stock(stock_id)
     if request.method == "POST":
         form = BuyStockForm(request.POST)
         if form.is_valid():
-            stock = form.cleaned_data["stock"]
             quantity = form.cleaned_data["quantity"]
+            try:
+                # Process the stock purchase
+                trading_service.buy_stock(account_id, stock_id, quantity)
 
-            trading_service.buy_stock(account_id, stock_id=stock.id, quantity=quantity)
+                # Render success screen
+                return render(request, "stock_trading/success_screen.html", {
+                    "success": True,
+                    "message": "Stock purchased successfully!",
+                    "account_id": account_id,
+                })
+            except ValidationError as e:
+                # Check if the error is related to overdraft
+                if "Overdraft limit" in str(e):
+                    error_message = f"Purchase failed: {str(e)}"
+                else:
+                    error_message = "An error occurred: " + str(e)
 
-            return redirect("stock_trading:dashboard")
+                # Render failure screen
+                return render(request, "stock_trading/success_screen.html", {
+                    "success": False,
+                    "message": error_message,
+                    "account_id": account_id,
+                })
 
     else:
         form = BuyStockForm()
 
-    return render(request, "stock_trading/buy_stock.html", {"form": form, "account_id": account_id,})
+    return render(request, "stock_trading/buy_stock.html", {"form": form, "account_id": account_id, "stock": stock})
+
+
+@inject
+def sell_stock():
+    pass
+
+@inject
+def history(
+    request: HttpRequest,
+    account_id,
+    trading_service: ITradingService = Provide["trading_service"],
+    transaction_service: ITransactionService = Provide["transaction_service"],
+    account_service: IAccountService = Provide["account_service"],
+):
+    timeframe = request.GET.get("timeframe", "all_time")
+
+    # Fetch the account object
+    custody_account = account_service.get_account(account_id)
+    if not custody_account:
+        raise Http404("Account not found.")
+
+    # Fetch stock transaction history
+    stock_transaction_history = transaction_service.get_stock_transaction_history(custody_account.reference_account_id, timeframe)
+
+    for transaction in stock_transaction_history:
+        transaction["stock_symbol"] = trading_service.get_stock(transaction["stock_id"]).symbol
+    # Prepare context for rendering
+
+    context = {
+        "account": custody_account,
+        "stock_transaction_history": stock_transaction_history,
+        "selected_timeframe": timeframe,
+    }
+
+    return render(request, "stock_trading/stock_transaction_history.html", context)

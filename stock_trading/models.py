@@ -15,6 +15,9 @@ class Stock(AbstractStock):
     class Meta:
         db_table = "stock"
 
+    def __str__(self):
+        return f'{self.symbol}, {self.stock_name}'
+
 class StockOwnership(models.Model):
     account = models.ForeignKey(ACCOUNT_MODEL, on_delete=models.PROTECT, related_name="account")
     stock = models.ForeignKey(Stock, on_delete=models.PROTECT, related_name="stock")
@@ -23,3 +26,6 @@ class StockOwnership(models.Model):
     class Meta:
         db_table = "stock_ownership"
         unique_together = ('account', 'stock')
+
+    def __str__(self):
+        return f'{self.account.account_id}, {self.stock}, {self.quantity}'

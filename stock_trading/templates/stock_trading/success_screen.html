@@ -1,0 +1,22 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    {% if success %}
+    <div class="alert alert-success">
+        <h1 class="display-4">
+            <i class="bi bi-check-circle-fill text-success"></i>
+        </h1>
+        <p class="lead">{{ message }}</p>
+    </div>
+    {% else %}
+    <div class="alert alert-danger">
+        <h1 class="display-4">
+            <i class="bi bi-x-circle-fill text-danger"></i>
+        </h1>
+        <p class="lead">{{ message }}</p>
+    </div>
+    {% endif %}
+    <a href="{% url 'stock_trading:stock_market' account_id %}" class="btn btn-primary">OK</a>
+</div>
+{% endblock %}

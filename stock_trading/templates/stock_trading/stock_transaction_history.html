@@ -1,0 +1,49 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mb-5">
+    <h2>Stock Transaction History</h2>
+    <p>Account ID: {{ account.account_id }}</p>
+
+    <!-- Dropdown for timeframes -->
+    <form method="get" class="mb-3">
+        <label for="timeframe" class="form-label">Select Timeframe:</label>
+        <select name="timeframe" id="timeframe" class="form-select" onchange="this.form.submit()">
+            <option value="30_days" {% if selected_timeframe == "30_days" %}selected{% endif %}>Last 30 Days</option>
+            <option value="60_days" {% if selected_timeframe == "60_days" %}selected{% endif %}>Last 60 Days</option>
+            <option value="all_time" {% if selected_timeframe == "all_time" %}selected{% endif %}>All Time</option>
+        </select>
+    </form>
+
+    <!-- Stock Transaction Table -->
+    {% if stock_transaction_history %}
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Stock</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in stock_transaction_history %}
+                <tr>
+                    <td>{{ transaction.date }}</td>
+                    <td>{{ transaction.stock_symbol }}</td>
+                    <td>{{ transaction.transaction_type|title }}</td>
+                    <td>{{ transaction.quantity }}</td>
+                    <td>{{ transaction.amount }} EUR</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>No stock transaction history available for the selected timeframe.</p>
+    {% endif %}
+    <a href="{% url 'accounts:account_detail' account.account_id %}" class="btn btn-secondary">Back to Account Details</a>
+</div>
+{% endblock %}

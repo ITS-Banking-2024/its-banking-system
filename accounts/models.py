@@ -18,7 +18,7 @@ class AccountBase(Account):
         db_table: str = "account_base"
 
     def __str__(self):
-        return f"Account {self.account_id}"
+        return f"Account: ({self.account_id}), User: ({self.customer_id})"
 
 class CheckingAccount(AccountBase):
     class Meta:
@@ -49,6 +49,13 @@ class CustodyAccount(AccountBase):
         db_table = "account_custody"
 
     reference_account = models.ForeignKey(CheckingAccount, on_delete=models.CASCADE)
+    unique_identifier = models.CharField(
+        max_length=255,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Unique identifier for the bank's custody account ('bank_custody_account')."
+    )
 
     def save(self, *args, **kwargs):
         self.type = 'custody'  # Enforce the type value

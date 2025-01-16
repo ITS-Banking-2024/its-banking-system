@@ -14,4 +14,4 @@ class SavingsAccountAdmin(admin.ModelAdmin):
 
 @admin.register(CustodyAccount)
 class CustodyAccountAdmin(admin.ModelAdmin):
-    exclude = ('type',)
+    exclude = ('type', 'unique_identifier')

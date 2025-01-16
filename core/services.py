@@ -70,6 +70,10 @@ class IAccountService(ABC):
         pass
 
     @abstractmethod
+    def get_bank_custody_account(self):
+        pass
+
+    @abstractmethod
     def get_balance(self, account_id: UUID) -> float:
         pass
 
@@ -130,7 +134,15 @@ class ITransactionService(ABC):
         pass
 
     @abstractmethod
+    def create_new_stock_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID, stock_id: UUID, quantity: int, transaction_type: str) -> bool:
+        pass
+
+    @abstractmethod
     def get_transaction_history(self, account_id: UUID, timeframe: str) -> List[dict]:
+        pass
+
+    @abstractmethod
+    def get_stock_transaction_history(self, account_id: UUID, timeframe: str) -> List[dict]:
         pass
 
 
@@ -142,7 +154,11 @@ class ITradingService(ABC):
         pass
 
     @abstractmethod
-    def get_all_user_stocks(self, account_id: UUID) -> List[Stock]:
+    def get_all_user_stocks(self, account_id: UUID) -> List[dict]:
+        pass
+
+    @abstractmethod
+    def get_portfolio_value(self, account_id: UUID) -> float:
         pass
 
     @abstractmethod
@@ -158,5 +174,5 @@ class ITradingService(ABC):
         pass
 
     @abstractmethod
-    def get_current_stock_price(self, stock_id: UUID) -> float:
+    def get_current_stock_price(self, symbol: str) -> float:
         pass
