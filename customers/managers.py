@@ -4,6 +4,8 @@ from django.db import transaction, IntegrityError
 import yfinance as yf
 import random
 from django.apps import apps
+from django.db.models import QuerySet
+
 from core.models import Customer
 from customers.settings import CHECKING_ACCOUNT_MODEL, CUSTODY_ACCOUNT_MODEL, STOCK_MODEL, STOCK_OWNERSHIP_MODEL
 import logging
@@ -70,3 +72,16 @@ class CustomerManager(BaseUserManager):
                     logger.error(f"Error adding stock {ticker.ticker}: {str(e)}")
 
             return user
+
+    def get_by_customer_id(self, customer_id: Union[int, str]) -> Optional[Customer]:
+        # Query for Customer object by customer_id (UUID or int)
+        qs = self.get_queryset().filter(customer_id=customer_id)
+        return qs.first() if qs.exists() else None
+
+    def delete_customer(self, customer_id: Union[int, str]) -> None:
+        # Delete a Customer object by customer_id (UUID or int)
+        self.get_queryset().filter(customer_id=customer_id).delete()
+
+    def get_all_customers(self) -> QuerySet:
+        # Query for all Customer objects
+        return self.get_queryset().all()
