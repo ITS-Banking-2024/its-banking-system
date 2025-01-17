@@ -82,6 +82,8 @@ def buy_stock(
                     "success": True,
                     "message": "Stock purchased successfully!",
                     "account_id": account_id,
+                    "stock": stock,
+                    "action": ""
                 })
             except ValidationError as e:
                 # Check if the error is related to overdraft
@@ -95,6 +97,8 @@ def buy_stock(
                     "success": False,
                     "message": error_message,
                     "account_id": account_id,
+                    "stock": stock,
+                    "action": "buy"
                 })
 
     else:
@@ -125,6 +129,8 @@ def sell_stock(
                     "success": True,
                     "message": "Stock sold successfully!",
                     "account_id": account_id,
+                    "stock": stock,
+                    "action": ""
                 })
             except ValidationError as e:
                 # Check if the error is related to overdraft
@@ -138,6 +144,8 @@ def sell_stock(
                     "success": False,
                     "message": error_message,
                     "account_id": account_id,
+                    "stock": stock,
+                    "action": "sell"
                 })
 
     else:

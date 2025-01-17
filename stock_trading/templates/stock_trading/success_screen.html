@@ -17,6 +17,12 @@
         <p class="lead">{{ message }}</p>
     </div>
     {% endif %}
-    <a href="{% url 'stock_trading:stock_market' account_id %}" class="btn btn-primary">OK</a>
+    {% if action == "buy" %}
+        <a href="{% url 'stock_trading:buy_stock' account_id=account_id stock_id=stock.stockID %}" class="btn btn-primary">OK</a>
+    {% elif action == "sell" %}
+        <a href="{% url 'stock_trading:sell_stock' account_id=account_id stock_id=stock.stockID %}" class="btn btn-primary">OK</a>
+    {% else %}
+        <a href="{% url 'stock_trading:stock_market' account_id=account_id %}" class="btn btn-secondary">Back to Dashboard</a>
+    {% endif %}
 </div>
 {% endblock %}
