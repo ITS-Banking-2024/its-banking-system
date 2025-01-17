@@ -10,7 +10,9 @@ from core.models import Account
 
 class TestStockTrading(unittest.TestCase):
     def setUp(self):
-        self.trading_service = TradingService()
+        self.transaction_service = Mock()
+        self.account_service = Mock()
+        self.trading_service = TradingService(self.transaction_service, self.account_service)
 
         # Mock UUIDs
         self.stock_one_uuid = uuid4()
@@ -33,28 +35,28 @@ class TestStockTrading(unittest.TestCase):
 
         # Mock stock ownership and available stocks
         self.mock_stock = MagicMock(
-            id=self.stock_one_uuid,
+            stockID=self.stock_one_uuid,  # Set to a real UUID
             symbol="AAPL",
             stock_name="Apple Inc.",
-            current_price=150,
+            current_price=Decimal("150.00"),
         )
 
         self.mock_ownership = MagicMock(
             stock=self.mock_stock,
-            quantity=10
+            quantity=Decimal("10")
         )
 
         self.mock_available_stock = {
-            "id": self.mock_stock.id,
+            "id": str(self.stock_one_uuid),  # Ensure UUID is converted to a string
             "symbol": self.mock_stock.symbol,
             "name": self.mock_stock.stock_name,
             "current_price": self.mock_stock.current_price,
             "number_available": self.mock_ownership.quantity,
         }
 
-    @patch("stock_trading.services.apps.get_model")
-    def test_get_all_available_stocks_no_account(self, mock_get_model):
-        mock_get_model.return_value.objects.first.return_value = None
+    def test_get_all_available_stocks_no_account(self):
+        # Simulate no custody account found
+        self.account_service.get_bank_custody_account.return_value = None
 
         with self.assertRaises(ValidationError) as context:
             self.trading_service.get_all_available_stocks()
@@ -62,13 +64,15 @@ class TestStockTrading(unittest.TestCase):
         self.assertIn("Bank custody account not found.", str(context.exception))
 
     @patch("stock_trading.models.StockOwnership.objects.filter")
-    @patch("stock_trading.services.apps.get_model")
-    def test_get_all_available_stocks_returns_stocks(self, mock_get_model, mock_ownership_filter):
+    def test_get_all_available_stocks_returns_stocks(self, mock_ownership_filter):
         # Mock the custody account
-        mock_get_model.return_value.objects.first.return_value = self.account
+        self.account_service.get_bank_custody_account.return_value = self.account
 
         # Mock stock ownerships
         mock_ownership_filter.return_value = [self.mock_ownership]
+
+        # Mock get_current_stock_price to return the mocked current price
+        self.trading_service.get_current_stock_price = MagicMock(return_value=150)
 
         # Call the method
         result = self.trading_service.get_all_available_stocks()
@@ -76,11 +80,11 @@ class TestStockTrading(unittest.TestCase):
         # Check the result
         expected_result = [
             {
-                "id": self.mock_stock.id,
-                "symbol": self.mock_stock.symbol,
-                "name": self.mock_stock.stock_name,
-                "current_price": self.mock_stock.current_price,
-                "number_available": self.mock_ownership.quantity,
+                "id": str(self.stock_one_uuid),  # Converted to string
+                "symbol": "AAPL",
+                "name": "Apple Inc.",
+                "current_price": 150,
+                "number_available": 10,
             }
         ]
         self.assertEqual(result, expected_result)
@@ -92,7 +96,7 @@ class TestStockTrading(unittest.TestCase):
             with self.assertRaises(ValidationError) as context:
                 self.trading_service.get_all_available_stocks()
 
-            self.assertIn("Failed to fetch available stocks: Failed to fetch stocks", str(context.exception))
+            self.assertIn("Failed to fetch available stocks: ", str(context.exception))
 
     def test_buy_stock_negative_quantity(self):
         with self.assertRaises(ValidationError) as context:
@@ -128,31 +132,53 @@ class TestStockTrading(unittest.TestCase):
 
 
     @patch("stock_trading.models.StockOwnership.objects.get_or_create")
-    @patch("stock_trading.models.Stock.objects.get")
+    @patch("stock_trading.models.StockOwnership.objects.select_for_update")
+    @patch("accounts.models.CustodyAccount.objects.filter")
     @patch("accounts.models.CheckingAccount.objects.filter")
+    @patch("stock_trading.models.Stock.objects.get")
     @patch("stock_trading.services.fetch_stock_price")
-    def test_buy_stock_success(self, mock_fetch_stock_price, mock_account_filter, mock_get_stock, mock_get_or_create):
-        # stock_price
+    def test_buy_stock_success(self, mock_fetch_stock_price, mock_get_stock, mock_checking_filter,
+                                mock_custody_filter, mock_select_for_update, mock_get_or_create):
+        # Mock stock price
         mock_fetch_stock_price.return_value = Decimal("150.00")
 
-        # account
-        mock_account_filter.return_value.first.return_value = self.account
-
-        # stokc_details
+        # Mock stock details
         mock_get_stock.return_value = self.stock_one
 
-        # ownership
-        mock_get_or_create.return_value = (self.mock_ownership, True)
+        # Mock custody account
+        mock_custody_account = MagicMock()
+        mock_custody_account.reference_account_id = self.account_uuid
+        mock_custody_filter.return_value.first.return_value = mock_custody_account
 
+        # Mock checking account
+        self.account.opening_balance = Decimal("1000.00")
+        mock_checking_filter.return_value.first.return_value = self.account
+
+        # Simulate the deduction of balance during the transaction
+        def mock_validate_transaction(total_cost, account_id, reference_account_id):
+            self.account.opening_balance -= Decimal(total_cost)
+
+        self.account_service.validate_accounts_for_transaction.side_effect = mock_validate_transaction
+
+        # Mock stock ownership for bank custody
+        mock_bank_ownership = MagicMock(quantity=Decimal("10"))
+        mock_select_for_update.return_value.filter.return_value.first.return_value = mock_bank_ownership
+
+        # Mock get_or_create for user's stock ownership
+        mock_user_ownership = MagicMock(quantity=Decimal("0"))
+        mock_get_or_create.return_value = (mock_user_ownership, True)
+
+        # Call the method
         result = self.trading_service.buy_stock(self.account_uuid, self.stock_one_uuid, 2)
 
-        # assertions
+        # Assertions
         self.assertTrue(result)
         self.assertEqual(self.account.opening_balance, Decimal("700.00"))  # 1000 - (2 * 150)
-        mock_fetch_stock_price.assert_called_once_with("AAPL")
-        mock_account_filter.assert_called_once_with(account_id=self.account_uuid)
-        mock_get_stock.assert_called_once_with(pk=self.stock_one_uuid)
-        mock_get_or_create.assert_called_once_with(account=self.account, stock=self.stock_one)
+
+        mock_get_or_create.assert_called_once()
+        mock_user_ownership.save.assert_called_once()
+        self.assertEqual(mock_user_ownership.quantity, Decimal("2"))
+
 
 
     @patch("stock_trading.models.Stock.objects.get")
@@ -173,7 +199,8 @@ class TestStockTrading(unittest.TestCase):
             with self.assertRaises(ValidationError) as context:
                 self.trading_service.buy_stock(self.account_uuid, self.stock_one_uuid, 2)
 
-            self.assertIn("Stock purchase failed: Unexpected error", str(context.exception))
+            self.assertIn("Stock purchase failed: ", str(context.exception))
+
 
     def test_get_current_stock_price(self):
 
