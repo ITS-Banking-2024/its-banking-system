@@ -49,7 +49,8 @@ class TestTransactions(TestCase):
             sending_account_id=sending_account_id,
             receiving_account_id=receiving_account_id,
             amount=amount,
-            stockId=self.stock,
+            stockId=self.stock.stockID,
+
             quantity=10,
             transaction_type='buy'
         )
@@ -59,7 +60,7 @@ class TestTransactions(TestCase):
         self.assertEqual(stock_transaction.sending_account_id, sending_account_id)
         self.assertEqual(stock_transaction.receiving_account_id, receiving_account_id)
         self.assertEqual(stock_transaction.amount, amount)
-        self.assertEqual(stock_transaction.stockId, self.stock)
+        self.assertEqual(stock_transaction.stockId, self.stock.stockID)
         self.assertEqual(stock_transaction.quantity, 10)
         self.assertEqual(stock_transaction.transaction_type, 'buy')
         self.assertEqual(str(stock_transaction), f"Transaction {stock_transaction.transaction_id} of amount {stock_transaction.amount}")

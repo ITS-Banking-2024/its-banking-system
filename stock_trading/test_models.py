@@ -15,7 +15,9 @@ class StockModelTest(TestCase):
         stock_query = Stock.objects.get_by_stock_name('AAPL')
 
         # check that the Stock object was retrieved successfully
-        self.assertEqual(stock_query.first(), stock)
+        self.assertEqual(stock_query.get().stock_name, stock.stock_name)
+        self.assertEqual(stock_query.get().current_price, stock.current_price)
+        self.assertEqual(str(stock_query.get().stockID), stock.stockID)
 
     def test_get_by_stock_id(self):
 
@@ -26,7 +28,9 @@ class StockModelTest(TestCase):
         stock_query = Stock.objects.get_by_stock_id('123e4567-e89b-12d3-a456-426614174000')
 
         # check that the Stock object was retrieved successfully
-        self.assertEqual(stock_query.first(), stock)
+        self.assertEqual(stock_query.get().stock_name, stock.stock_name)
+        self.assertEqual(stock_query.get().current_price, stock.current_price)
+        self.assertEqual(str(stock_query.get().stockID), stock.stockID)
 
 
     def test_get_all_stocks(self):

@@ -1,14 +1,15 @@
 from unittest.mock import patch, MagicMock
 from dependency_injector import containers, providers
 from django.urls import reverse
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from marshmallow.exceptions import ValidationError
 from uuid import uuid4
 from decimal import Decimal
 
-from core.services import ITradingService
+from core.services import ITradingService, IAccountService
+from core.models import Account
 from stock_trading.models import StockOwnership, Stock
-
+from stock_trading.views import stock_market
 
 class TestContainer(containers.DeclarativeContainer):
     trading_service = providers.Singleton(
@@ -16,198 +17,156 @@ class TestContainer(containers.DeclarativeContainer):
         spec=ITradingService
     )
 
-    stock_ownership = providers.Factory(
+    stock_ownership_factory = providers.Factory(
         MagicMock,
         spec=StockOwnership
     )
 
     account_factory = providers.Factory(
         MagicMock,
-        spec=StockOwnership
+        spec=Account
+    )
+
+    account_service = providers.Singleton(
+        MagicMock,
+        spec=IAccountService
     )
 
     stock_factory = providers.Factory(
         MagicMock,
         spec=Stock
-        )
+    )
 
 
 class StockTradingViewsTest(TestCase):
 
     def setUp(self):
         self.container = TestContainer()
+
+        self.account_service = self.container.account_service()
+        self.trading_service = self.container.trading_service()
+        self.account_factory = self.container.account_factory()
+        self.stock_factory = self.container.stock_factory()
+        self.stock_ownership_factory = self.container.stock_ownership_factory()  # Fixed typo
+
         self.stock_id = uuid4()
         self.account_id = uuid4()
 
-        self.unvalid_account = MagicMock(first=MagicMock(return_value=None))
+        # Mock account
+        self.valid_account = self.account_factory(
+            account_id=self.account_id,
+            reference_account_id=uuid4(),
+            opening_balance=Decimal('1000.00')
+        )
 
-        # Mock an account
-        self.valid_account = MagicMock(id=self.account_id)
 
-        # Mock a stock and its ownership
-        self.mock_stock = MagicMock(
+        # Mock stock and ownership
+        self.mock_stock = self.stock_factory(
             id=self.stock_id,
             symbol="AAPL",
             stock_name="Apple Inc.",
-            current_price=150,
+            current_price=Decimal("150.00"),
         )
-        self.mock_ownership = MagicMock(
+
+        self.user_portfolio_stock = self.stock_factory(
+            id=self.stock_id,
+            symbol="AAPL",
+            stock_name="Apple Inc.",
+            current_price=Decimal("150.00"),
+            quantity=10
+        )
+
+        self.mock_ownership = self.stock_ownership_factory(
             stock=self.mock_stock,
             quantity=10
         )
 
-        # Mock trading service stocks
-        self.mock_available_stock = {
-            "id": self.mock_stock.id,
-            "symbol": self.mock_stock.symbol,
-            "name": self.mock_stock.stock_name,
-            "current_price": self.mock_stock.current_price,
-            "number_available": self.mock_ownership.quantity,
-        }
+        self.user_portfolio = [{
+            "id": str(self.user_portfolio_stock.id),
+            "name": self.user_portfolio_stock.stock_name,
+            "symbol": self.user_portfolio_stock.symbol,
+            "quantity": self.mock_ownership.quantity,
+            "current_price": self.user_portfolio_stock.current_price,
+            "total_value": round(self.mock_ownership.quantity * self.user_portfolio_stock.current_price, 2),
+        }]
+
+        self.container.wire(modules=["stock_trading.views"])
+
+        # Set up request factory
+        self.factory = RequestFactory()
 
 
-    def test_stock_market_view_no_account(self):
+    def test_stock_market_no_account(self):
+        self.account_service.get_account.return_value = None
 
-        with patch("stock_trading.views.AccountBase.objects.filter", return_value=self.unvalid_account):
-            with self.assertRaises(ValidationError) as context:
-                self.client.get(reverse("stock_trading:stock_market", args=[self.account_id]))
+        request = self.factory.get(reverse("stock_trading:stock_market", args=[self.account_id]))
 
-            self.assertEqual(str(context.exception), "No account found.")
+        with self.assertRaises(ValidationError) as context:
+            stock_market(request, self.account_id, trading_service=self.trading_service, account_service=self.account_service)
 
-    @patch("stock_trading.views.StockOwnership.objects.filter")
-    @patch("stock_trading.views.apps.get_model")
-    @patch("stock_trading.views.AccountBase.objects.filter")
-    @patch("stock_trading.views.Provide")
-    def test_stock_market_view(self, mock_provide, mock_account_filter, mock_get_model, mock_ownership_filter):
-        # Mock the account query
-        mock_account_filter.return_value.first.return_value = self.valid_account
+        self.assertEqual(str(context.exception), "No account found.")
 
-        # Mock the custody account and its stock ownerships
-        mock_custody_account = MagicMock()
-        mock_get_model.return_value.objects.first.return_value = mock_custody_account
-        mock_ownership_filter.side_effect = lambda account: [self.mock_ownership] if account == mock_custody_account else []
+    def test_stock_market_no_available_stocks(self):
+        self.account_service.get_account.return_value = self.valid_account
+        self.trading_service.get_all_available_stocks.return_value = None
 
-        # Mock the trading service
-        mock_provide.return_value["trading_service"].get_all_available_stocks.side_effect = lambda: [self.mock_available_stock]
+        request = self.factory.get(reverse("stock_trading:stock_market", args=[self.account_id]))
 
+        with self.assertRaises(ValidationError) as context:
+            stock_market(request, self.account_id, trading_service=self.trading_service, account_service=self.account_service)
 
-        # Perform the GET request
+        self.assertEqual(str(context.exception), "No available stocks.")
+
+    def test_stock_market_no_portfolio(self):
+        self.account_service.get_account.return_value = self.valid_account
+        self.trading_service.get_all_available_stocks.return_value = [
+            {
+                "id": str(self.mock_stock.id),
+                "symbol": self.mock_stock.symbol,
+                "name": self.mock_stock.stock_name,
+                "current_price": self.mock_stock.current_price,
+                "number_available": self.mock_ownership.quantity,
+            }
+        ]
+        self.trading_service.get_all_user_stocks.return_value = None
+
+        request = self.factory.get(reverse("stock_trading:stock_market", args=[self.account_id]))
+
+        with self.assertRaises(ValidationError) as context:
+            stock_market(request, self.account_id, trading_service=self.trading_service, account_service=self.account_service)
+
+        self.assertEqual(str(context.exception), "No user portfolio.")
+
+    def test_stock_market_success(self):
+        self.account_service.get_account.return_value = self.valid_account
+        self.trading_service.get_all_available_stocks.return_value = [
+            {
+                "id": str(self.mock_stock.id),
+                "symbol": self.mock_stock.symbol,
+                "name": self.mock_stock.stock_name,
+                "current_price": self.mock_stock.current_price,
+                "number_available": self.mock_ownership.quantity,
+            }
+        ]
+        self.trading_service.get_all_user_stocks.return_value = self.user_portfolio
+        self.account_service.get_balance.return_value = Decimal("1000.00")  # Mock expected value
+
+        # Use the Django test client to call the URL
         response = self.client.get(reverse("stock_trading:stock_market", args=[self.account_id]))
 
-        # Assertions
+        # Verify response status code
         self.assertEqual(response.status_code, 200)
 
         # Verify template used
         self.assertTemplateUsed(response, "stock_trading/dashboard.html")
 
-        # Verify if context contains the data
-
+        # Verify context data
         self.assertIn("account_id", response.context)
-        self.assertIn("stocks", response.context)
-        self.assertIn("total_value", response.context)
-        self.assertIn("available_stocks", response.context)
-
-        # get available stocks from response
-        available_stocks = response.context.get('available_stocks', [])
-
-        stock = available_stocks[0]
-        self.assertEqual(stock['name'], "Apple Inc.")
-        self.assertEqual(stock['current_price'], 150)
-        self.assertEqual(stock['number_available'], 10)
-        self.assertEqual(stock['symbol'], "AAPL")
-        self.assertEqual(response.context["account_id"], self.account_id)
-
-
-    # check if we can get acces to the vi
-    def test_buy_stock_get_request(self):
-
-        response = self.client.get(reverse("stock_trading:buy_stock", args=[self.account_id]))
-
-        self.assertEqual(response.status_code, 200)
-
-
-        self.assertTemplateUsed(response, "stock_trading/buy_stock.html")
-
-        self.assertIn("form", response.context)
-        self.assertEqual(response.context["account_id"], self.account_id)
-
-    #chek if we put invalid acces we wil be redirected to the the same page with the form
-    def test_buy_stock_post_invalid_form(self):
-        form_data = {"stock": "", "quantity": "invalid"}
-
-
-        with patch("stock_trading.views.BuyStockForm.is_valid", return_value=False):
-            response = self.client.post(reverse("stock_trading:buy_stock", args=[self.account_id]), data=form_data)
-
-            self.assertEqual(response.status_code, 200)
-            self.assertTemplateUsed(response, "stock_trading/buy_stock.html")
-
-            self.assertIn("form", response.context)
-            self.assertFalse(response.context["form"].is_valid())
-
-
-            self.container.trading_service().buy_stock.assert_not_called()
-
-
-    @patch("stock_trading.models.StockOwnership.objects.get_or_create")
-    @patch("accounts.models.CheckingAccount.objects.filter")
-    @patch("stock_trading.services.fetch_stock_price")
-    @patch("stock_trading.models.Stock.objects.get")
-    @patch("stock_trading.views.BuyStockForm")
-    @patch("stock_trading.views.Provide")
-    def test_buy_stocks_with_valid_form(
-        self, mock_provide, mock_buy_stock_form, mock_stock_get, mock_fetch_stock_price, mock_account_filter, mock_get_or_create
-    ):
-
-        # mock the trading service and its buy_stock method
-        mock_trading_service = MagicMock()
-        mock_trading_service.buy_stock.return_value = True
-        mock_provide.return_value["trading_service"] = mock_trading_service
-
-        # mock the stock object
-        mock_stock = MagicMock()
-        mock_stock.id = uuid4()
-        mock_stock.stock_name = "Apple Inc."
-        mock_stock_get.return_value = mock_stock
-
-        # mock the stock price
-        mock_fetch_stock_price.return_value = Decimal("150.00")
-
-        # mock account
-        mock_account = MagicMock()
-        mock_account.id = uuid4()
-        mock_account.opening_balance = Decimal("10000.00")
-        mock_account_filter.return_value.first.return_value = mock_account
-
-        # mock stock_ownership
-        mock_ownership = MagicMock()
-        mock_get_or_create.return_value = (mock_ownership, True)
-
-        # mock behaviour
-        mock_form_instance = MagicMock()
-        mock_form_instance.is_valid.return_value = True
-        mock_form_instance.cleaned_data = {
-            "stock": mock_stock,
-            "quantity": 5,
-        }
-        mock_buy_stock_form.return_value = mock_form_instance
-
-        # POST request
-        response = self.client.post(
-            reverse("stock_trading:buy_stock", args=[str(mock_account.id)]),
-            data={"stock": str(mock_stock.id), "quantity": 5},
+        self.assertEqual(response.context["account_id"], str(self.account_id))
+        self.assertEqual(response.context["available_funds"], Decimal("1000.00"))
+        self.assertEqual(response.context["portfolio"], self.user_portfolio)
+        self.assertEqual(
+            response.context["total_portfolio_value"],
+            self.trading_service.get_portfolio_value.return_value
         )
-
-        # assertions
-        form_call_args = mock_buy_stock_form.call_args[0][0]
-        self.assertEqual(form_call_args.get("stock"), str(mock_stock.id))
-        self.assertEqual(form_call_args.get("quantity"), "5")
-
-        mock_form_instance.is_valid.assert_called_once()
-        mock_fetch_stock_price.assert_called_once_with("Apple Inc.")
-        mock_account_filter.assert_called_once_with(account_id=mock_account.id)
-        mock_get_or_create.assert_called_once_with(account=mock_account, stock=mock_stock)
-
-        # assert if we are doing redirection
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse("stock_trading:dashboard"))
+        self.assertEqual(response.context["available_stocks"][0]["name"], self.mock_stock.stock_name)

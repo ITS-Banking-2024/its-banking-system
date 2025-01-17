@@ -37,7 +37,8 @@ class AccountViewsTest(TestCase):
         self.another_account_id = uuid4()
         self.receiving_account_id = uuid4()
 
-        self.mock_account = TestContainer.account_factory(account_id=self.account_id, type="checking", balance=1000, customer_id=self.customer_id)
+        self.mock_account = TestContainer.account_factory(
+            account_id=self.account_id, type="checking", balance=1000, customer_id=self.customer_id, reference_account_id=self.another_account_id)
 
         # Wire the container and configure the service mocks
         c = TestContainer()
