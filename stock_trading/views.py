@@ -20,11 +20,11 @@ def stock_market(request: HttpRequest, account_id, trading_service: ITradingServ
 
     available_stocks = trading_service.get_all_available_stocks()
     if not available_stocks:
-        print("No available stocks.")
+        raise ValidationError("No available stocks.")
 
     portfolio = trading_service.get_all_user_stocks(account_id)
     if not portfolio:
-        print("No user portfolio.")
+        raise ValidationError("No user portfolio.")
 
     return render(request, "stock_trading/dashboard.html", {
         "account_id": str(account_id),
