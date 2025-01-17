@@ -59,7 +59,6 @@ def stock_market(
             },
         )
 
-
 @inject
 def buy_stock(
     request,
