@@ -32,9 +32,7 @@ def new_transaction(request: HttpRequest, account_id, transaction_service: ITran
                 receiving_account_id = form.cleaned_data["receiving_account_id"]
                 amount = form.cleaned_data["amount"]
 
-                if not account_service.validate_accounts_for_transaction(amount, sending_account_id, receiving_account_id):
-                    raise ValidationError(f"Accounts validation failed.")
-
+                account_service.validate_accounts_for_transaction(amount, sending_account_id, receiving_account_id)
                 # Use the service to create the transaction
                 transaction_service.create_new_transaction(amount, sending_account_id, receiving_account_id)
                 success = True
@@ -103,7 +101,6 @@ def savings(request: HttpRequest, account_id, transaction_service: ITransactionS
             savings_account_id = account_id
             transaction_type = form.cleaned_data["transaction_type"]
             amount = form.cleaned_data["amount"]
-
 
             try:
                 if transaction_type == "deposit":

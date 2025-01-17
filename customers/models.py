@@ -1,6 +1,5 @@
 # Create your models here.
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 from customers.managers import CustomerManager
 
 from core.models import Customer

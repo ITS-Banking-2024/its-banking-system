@@ -1,15 +1,12 @@
 from datetime import datetime, timedelta
+from typing import List
 from uuid import UUID
 
-from dependency_injector.wiring import Provide
 from django.db import transaction
 from marshmallow import ValidationError
 
 from core.services import ITransactionService
 from transactions.models import Transaction, StockTransaction
-from accounts.models import Account
-from accounts.managers import AccountManager
-from typing import Optional, List
 
 
 class TransactionService(ITransactionService):
@@ -46,16 +43,6 @@ class TransactionService(ITransactionService):
             return True
         except Exception as e:
             raise ValidationError(f"Transaction failed: {str(e)}")
-
-    #TODO: delete this
-    def create_transaction(self, sending_account: Account, receiving_account: Account, amount: float):
-        pass
-
-    def update_transaction(self, transaction_id: int, amount: float):
-        pass
-
-    def delete_transaction(self, transaction_id: int):
-        pass
 
 
     def get_transaction_history(self, account_id: UUID, timeframe: str) -> List[dict]:

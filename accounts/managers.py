@@ -1,8 +1,8 @@
-from typing import Optional, List, Union
+from typing import Optional, Union
 from uuid import UUID
 
 from django.db.models import QuerySet, Manager
-from core.managers import CoreProductManager
+
 from accounts.models import Account
 
 

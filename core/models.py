@@ -1,10 +1,8 @@
+import uuid
 from datetime import datetime
 
-from django.contrib.auth.hashers import make_password, is_password_usable
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-import uuid
-
 from django.db.models import Model
 
 from core.managers import CoreProductManager

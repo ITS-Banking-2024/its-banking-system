@@ -1,10 +1,10 @@
-from dependency_injector.wiring import inject, Provide
-from django.db import models, transaction
 from typing import List
 from uuid import UUID
+
+from dependency_injector.wiring import inject, Provide
+from django.db import models
+
 from core.models import Account
-
-
 from core.services import ICustomerService
 from customers.models import Customer
 

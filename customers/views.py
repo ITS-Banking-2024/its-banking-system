@@ -1,16 +1,12 @@
-from django.shortcuts import render
-from .models import Customer
-
 # Create your views here.
 from dependency_injector.wiring import inject, Provide
-from django.http import HttpResponse, HttpRequest
-from django.template import loader
-
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.hashers import check_password, make_password
-from django.shortcuts import redirect
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpRequest
+from django.shortcuts import redirect
+from django.shortcuts import render
+from django.template import loader
 
 from core.services import ICustomerService
 
