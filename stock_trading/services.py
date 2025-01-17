@@ -58,6 +58,18 @@ class TradingService(ITradingService):
         ]
         return portfolio
 
+    def get_user_owned_stock(self, account_id: UUID, stock_id: UUID) -> StockOwnership:
+        account = self.account_service.get_account(account_id)
+        stock = self.get_stock(stock_id)
+        if not account:
+            raise ValidationError(f"Account with id {account_id} is not found.")
+
+        stock_ownership = StockOwnership.objects.filter(account=account, stock=stock).first()
+        if not stock_ownership:
+            raise ValidationError(f"Account: {account_id} does not have stock {stock_id} owned.")
+
+        return stock_ownership
+
     def get_portfolio_value(self, account_id: UUID) -> float:
         user_stocks = self.get_all_user_stocks(account_id)
         portfolio_value = 0
@@ -160,13 +172,40 @@ class TradingService(ITradingService):
             with transaction.atomic():
                 # Fetch stock details
                 stock = Stock.objects.get(pk=stock_id)
-                stock_price = fetch_stock_price(stock.stock_name)
+                stock_price = fetch_stock_price(stock.symbol)
                 total_revenue = stock_price * quantity
 
                 # Fetch stock ownership
-                ownership = StockOwnership.objects.filter(account_id=account_id, stock_id=stock_id).first()
-                if not ownership or ownership.quantity < quantity:
+                ownership = self.get_user_owned_stock(account_id, stock_id)
+                if ownership.quantity < quantity:
                     raise ValidationError("Not enough stock to sell.")
+
+                # Fetch user's account
+                custody_account = self.account_service.get_account(account_id)
+                if not custody_account:
+                    raise ValidationError(f"Account {str(account_id)} not found.")
+
+                checking_account = self.account_service.get_account(custody_account.reference_account_id)
+                if not checking_account:
+                    raise ValidationError(f"Account {str(account_id)} not found.")
+
+                bank_custody_account = self.account_service.get_bank_custody_account()
+                if not bank_custody_account:
+                    raise ValidationError(f"Bank custody account not found.")
+
+                try:
+                    self.account_service.validate_accounts_for_transaction(total_revenue, bank_custody_account.reference_account_id, checking_account.account_id)
+                except Exception as e:
+                    raise ValidationError(f"Validation failed: {str(e)}.")
+
+                bank_ownership, created = StockOwnership.objects.get_or_create(account=bank_custody_account, stock=stock)
+
+                if not self.transaction_service.create_new_stock_transaction(total_revenue, bank_custody_account.reference_account_id, checking_account.account_id, stock_id, quantity, "sell"):
+                    raise ValidationError("Transaction creation failed.")
+
+                # Add stock to bank's account
+                bank_ownership.quantity += quantity
+                bank_ownership.save()
 
                 # Reduce stock quantity
                 ownership.quantity -= quantity
@@ -174,13 +213,6 @@ class TradingService(ITradingService):
                     ownership.delete()
                 else:
                     ownership.save()
-
-                # Credit revenue to the account
-                account = CheckingAccount.objects.filter(account_id=account_id).first()
-                if not account:
-                    raise ValidationError("Account not found.")
-                account.opening_balance += total_revenue
-                account.save()
 
             return True
 

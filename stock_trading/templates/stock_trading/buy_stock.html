@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container">
     <h2>Buy Stock: {{ stock.symbol }} - {{ stock.stock_name }}</h2>
-    <p><strong>Current Price:</strong> {{ stock.current_price }} EUR</p>
+    <p><strong>Current Price:</strong> {{ quantity }} EUR</p>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

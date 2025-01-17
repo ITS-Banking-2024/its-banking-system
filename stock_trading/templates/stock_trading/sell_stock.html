@@ -1,0 +1,15 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Sell Stock: {{ stock.symbol }} - {{ stock.stock_name }}</h2>
+    <p><strong>Current Price:</strong> {{ stock.current_price }} EUR</p>
+    <p><strong>Currently Holding:</strong> {{ quantity_owned }}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Sell</button>
+        <a href="{% url 'stock_trading:stock_market' account_id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}
