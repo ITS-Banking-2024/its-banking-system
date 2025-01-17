@@ -44,7 +44,7 @@
                         <td>{{ stock.current_price }} EUR</td>
                         <td>{{ stock.total_value }} EUR</td>
                         <td>
-                            <a href="{% url 'stock_trading:buy_stock' account_id=account_id stock_id=stock.id %}" class="btn btn-primary btn-sm">Sell</a>
+                            <a href="{% url 'stock_trading:sell_stock' account_id=account_id stock_id=stock.id %}" class="btn btn-primary btn-sm">Sell</a>
                         </td>
                     </tr>
                     {% endfor %}

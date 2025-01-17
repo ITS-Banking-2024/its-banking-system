@@ -7,7 +7,7 @@ from django.shortcuts import render, redirect
 from marshmallow import ValidationError
 
 from core.services import ITradingService, ITransactionService, IAccountService
-from stock_trading.forms import BuyStockForm
+from stock_trading.forms import BuyStockForm, SellStockForm
 from stock_trading.models import Stock
 
 
@@ -78,9 +78,46 @@ def buy_stock(
 
 
 @inject
-def sell_stock():
-    pass
+def sell_stock(
+    request,
+    account_id,
+    stock_id,
+    trading_service: ITradingService = Provide["trading_service"]
+):
+    stock = trading_service.get_stock(stock_id)
+    quantity_owned = trading_service.get_user_owned_stock(account_id, stock_id).quantity
+    if request.method == "POST":
+        form = SellStockForm(request.POST)
+        if form.is_valid():
+            quantity_to_sell = form.cleaned_data["quantity"]
+            try:
+                # Process the stock purchase
+                trading_service.sell_stock(account_id, stock_id, quantity_to_sell)
 
+                # Render success screen
+                return render(request, "stock_trading/success_screen.html", {
+                    "success": True,
+                    "message": "Stock sold successfully!",
+                    "account_id": account_id,
+                })
+            except ValidationError as e:
+                # Check if the error is related to overdraft
+                if "Overdraft limit" in str(e):
+                    error_message = f"Sell failed: {str(e)}"
+                else:
+                    error_message = "An error occurred: " + str(e)
+
+                # Render failure screen
+                return render(request, "stock_trading/success_screen.html", {
+                    "success": False,
+                    "message": error_message,
+                    "account_id": account_id,
+                })
+
+    else:
+        form = SellStockForm()
+
+    return render(request, "stock_trading/sell_stock.html", {"form": form, "account_id": account_id, "stock": stock, "quantity_owned": quantity_owned})
 @inject
 def history(
     request: HttpRequest,

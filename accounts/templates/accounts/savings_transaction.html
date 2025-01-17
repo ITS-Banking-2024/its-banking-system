@@ -5,6 +5,7 @@
     {% if user.is_authenticated %}
     <h2>Savings Account</h2>
         <p><strong>Balance:</strong> {{ balance }} EUR</p>
+        <p><strong>Available Funds:</strong> {{ available_funds }} EUR</p>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

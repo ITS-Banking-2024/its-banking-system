@@ -96,6 +96,7 @@ def history(
 
 @inject
 def savings(request: HttpRequest, account_id, transaction_service: ITransactionService = Provide["transaction_service"], account_service: IAccountService = Provide["account_service"]):
+    account = account_service.get_account(account_id)
     if request.method == "POST":
         form = SavingsTransactionForm(request.POST)
         if form.is_valid():
@@ -128,4 +129,4 @@ def savings(request: HttpRequest, account_id, transaction_service: ITransactionS
     else:
         form = SavingsTransactionForm()
 
-    return render(request, "accounts/savings_transaction.html", {"form": form, "account_id": account_id, "balance": account_service.get_balance(account_id)})
+    return render(request, "accounts/savings_transaction.html", {"form": form, "account_id": account_id, "balance": account_service.get_balance(account_id), "available_funds": account_service.get_balance(account.reference_account_id)})
