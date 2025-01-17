@@ -43,7 +43,6 @@ class AccountService(IAccountService):
         account = self.get_account(account_id)
 
         if isinstance(account, CustodyAccount):
-            #TODO figure this out
             return 0.0
         else:
             opening_balance = account.opening_balance
