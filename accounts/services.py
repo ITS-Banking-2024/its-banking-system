@@ -2,8 +2,7 @@ from typing import List
 from uuid import UUID
 
 from dependency_injector.wiring import Provide, inject
-from django.db import models, transaction
-from django.db.models.sql import Query
+from django.db import transaction
 from marshmallow import ValidationError
 
 from accounts.models import AccountBase, CheckingAccount, SavingsAccount, CustodyAccount
@@ -29,7 +28,7 @@ class AccountService(IAccountService):
     def get_all_accounts(self) -> List[Account]:
         return AccountBase.objects.all()
 
-    def get_accounts_by_customer_id(self, customer_id: UUID) -> models.QuerySet:
+    def get_accounts_by_customer_id(self, customer_id: UUID) -> List[Account]:
         return list(AccountBase.objects.filter(customer_id=customer_id))
 
     def get_bank_custody_account(self):
@@ -52,11 +51,11 @@ class AccountService(IAccountService):
 
             # Fetch transaction history and calculate the balance
             transactions = self.transaction_service.get_transaction_history(account_id, "all_time")
-            for transaction in transactions:
-                if transaction["sending_account_id"] == str(account_id):
-                    balance -= float(transaction["amount"])
-                elif transaction["receiving_account_id"] == str(account_id):
-                    balance += float(transaction["amount"])
+            for single_transaction in transactions:
+                if single_transaction["sending_account_id"] == str(account_id):
+                    balance -= float(single_transaction["amount"])
+                elif single_transaction["receiving_account_id"] == str(account_id):
+                    balance += float(single_transaction["amount"])
                 else:
                     raise ValidationError(f"Transaction not made with this account")
 
@@ -69,11 +68,11 @@ class AccountService(IAccountService):
         transaction_history = self.transaction_service.get_transaction_history(account_id, timeframe)
 
         # Calculate total sent and received amounts
-        for transaction in transaction_history:
-            if str(transaction["sending_account_id"]) == str(account_id):
-                total_sent += float(transaction["amount"])
-            elif str(transaction["receiving_account_id"]) == str(account_id):
-                total_received += float(transaction["amount"])
+        for single_transaction in transaction_history:
+            if str(single_transaction["sending_account_id"]) == str(account_id):
+                total_sent += float(single_transaction["amount"])
+            elif str(single_transaction["receiving_account_id"]) == str(account_id):
+                total_received += float(single_transaction["amount"])
             else:
                 raise ValidationError(f"Rogue transaction.")
 
@@ -83,8 +82,7 @@ class AccountService(IAccountService):
 
         return {"total_sent": total_sent, "total_received": total_received}
 
-    def validate_accounts_for_transaction(self, amount: float, sending_account_id: UUID,
-                                          receiving_account_id: UUID) -> bool:
+    def validate_accounts_for_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
         # Validate sending account
         sending_account = self.get_account(sending_account_id)
         if not sending_account:
@@ -96,6 +94,7 @@ class AccountService(IAccountService):
             raise ValidationError(f"Receiving account with ID {receiving_account_id} does not exist.")
 
         # Validate the transaction amount
+        amount = float(amount)
         if amount <= 0:
             raise ValidationError("Transaction amount must be greater than zero.")
 
@@ -113,12 +112,18 @@ class AccountService(IAccountService):
     def deposit_savings(self, account_id: UUID, amount: float):
         if amount <= 0:
             raise ValidationError("Deposit amount must be greater than zero.")
-        savings_account = SavingsAccount.objects.filter(account_id=account_id).first()
+
+        savings_account = self.get_account(account_id)
         if not savings_account:
             raise ValidationError(f"Account with ID {account_id} does not exist.")
-        reference_account_id = savings_account.reference_account.account_id
+
+        reference_account_id = savings_account.reference_account_id
+        if not reference_account_id:
+            raise ValidationError(f"Account with ID {reference_account_id} does not exist.")
+
         try:
             with transaction.atomic():
+                self.validate_accounts_for_transaction(amount, reference_account_id, savings_account.account_id)
                 self.transaction_service.create_new_transaction(
                     amount=amount,
                     sending_account_id=reference_account_id,
@@ -128,20 +133,22 @@ class AccountService(IAccountService):
             raise ValidationError(f"Deposit failed: {str(e)}")
 
     def withdraw_savings(self, account_id: UUID, amount: float):
-        if amount > self.get_balance(account_id):
-            raise ValidationError(f"Insufficient funds ({self.get_balance(account_id)} EUR) in account: {account_id} to withdraw {amount} EUR")
-
+        amount = float(amount)
         if amount <= 0:
             raise ValidationError("Withdrawal amount must be greater than zero.")
 
-        savings_account = SavingsAccount.objects.filter(account_id=account_id).first()
+        savings_account = self.get_account(account_id)
         if not savings_account:
             raise ValidationError(f"Savings account with ID {account_id} does not exist.")
 
-        reference_account_id = savings_account.reference_account.account_id
+        reference_account_id = savings_account.reference_account_id
+        if not reference_account_id:
+            raise ValidationError(f"Account with ID {reference_account_id} does not exist.")
 
         try:
             with transaction.atomic():
+                if amount > self.get_balance(savings_account.account_id):
+                    raise ValidationError(f"Withdrawal amount ({amount}) exceeds balance.")
                 self.transaction_service.create_new_transaction(
                     amount=amount,
                     sending_account_id=savings_account.account_id,

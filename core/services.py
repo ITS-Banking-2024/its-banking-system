@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List
 from uuid import UUID
-from datetime import datetime
 
 from django.db import models
 
-from core.models import Product
 from core.models import Account
-from stock_trading.models import Stock, StockOwnership
+from core.models import Product
+from swd_django_demo.settings import STOCK_MODEL, STOCK_OWNERSHIP_MODEL
 
 """
 In this code, we are defining the interfaces for the services.
@@ -117,17 +116,6 @@ class ICustomerService(ABC):
 
 
 class ITransactionService(ABC):
-    @abstractmethod
-    def create_transaction(self, sending_account: Account, receiving_account: Account, amount: float):
-        pass
-
-    @abstractmethod
-    def update_transaction(self, transaction_id: int, amount: float):
-        pass
-
-    @abstractmethod
-    def delete_transaction(self, transaction_id: int):
-        pass
 
     @abstractmethod
     def create_new_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
@@ -150,7 +138,7 @@ class ITransactionService(ABC):
 class ITradingService(ABC):
 
     @abstractmethod
-    def get_stock(self, stock_id:UUID) -> Stock:
+    def get_stock(self, stock_id:UUID) -> STOCK_MODEL:
         pass
 
     @abstractmethod
@@ -158,7 +146,7 @@ class ITradingService(ABC):
         pass
 
     @abstractmethod
-    def get_user_owned_stock(self, account_id: UUID, stock_id: UUID) -> StockOwnership:
+    def get_user_owned_stock(self, account_id: UUID, stock_id: UUID) -> STOCK_OWNERSHIP_MODEL:
         pass
 
     @abstractmethod

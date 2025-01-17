@@ -2,37 +2,62 @@
 
 from dependency_injector.wiring import inject, Provide
 from django.http import HttpRequest, Http404
-from django.shortcuts import get_object_or_404
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from marshmallow import ValidationError
 
 from core.services import ITradingService, ITransactionService, IAccountService
 from stock_trading.forms import BuyStockForm, SellStockForm
-from stock_trading.models import Stock
-
 
 
 @inject
-def stock_market(request: HttpRequest, account_id, trading_service: ITradingService = Provide["trading_service"], account_service: IAccountService = Provide["account_service"]):
-    account = account_service.get_account(account_id)
-    if not account:
-        raise ValidationError("No account found.")
+def stock_market(
+    request: HttpRequest,
+    account_id,
+    trading_service: ITradingService = Provide["trading_service"],
+    account_service: IAccountService = Provide["account_service"],
+):
+    try:
+        # Fetch account details
+        account = account_service.get_account(account_id)
+        if not account:
+            raise ValidationError("No account found.")
 
-    available_stocks = trading_service.get_all_available_stocks()
-    if not available_stocks:
-        raise ValidationError("No available stocks.")
+        # Fetch available stocks
+        available_stocks = trading_service.get_all_available_stocks()
+        if not available_stocks:
+            raise ValidationError("No available stocks.")
 
-    portfolio = trading_service.get_all_user_stocks(account_id)
-    if not portfolio:
-        raise ValidationError("No user portfolio.")
+        # Fetch user stocks portfolio
+        portfolio = trading_service.get_all_user_stocks(account_id)
+        message = "No stocks are currently owned. Discover available stocks in the Discover Tab!" if not portfolio else ""
 
-    return render(request, "stock_trading/dashboard.html", {
-        "account_id": str(account_id),
-        "available_funds": account_service.get_balance(account.reference_account_id),
-        "portfolio": portfolio,
-        "total_portfolio_value": trading_service.get_portfolio_value(account_id),
-        "available_stocks": available_stocks
-    })
+        # Render the dashboard
+        return render(
+            request,
+            "stock_trading/dashboard.html",
+            {
+                "account_id": str(account_id),
+                "available_funds": account_service.get_balance(account.reference_account_id),
+                "portfolio": portfolio,
+                "total_portfolio_value": trading_service.get_portfolio_value(account_id),
+                "available_stocks": available_stocks,
+                "message": message,
+            },
+        )
+    except ValidationError as e:
+        # Handle unexpected validation errors
+        return render(
+            request,
+            "stock_trading/dashboard.html",
+            {
+                "account_id": str(account_id),
+                "available_funds": 0,
+                "portfolio": [],
+                "total_portfolio_value": 0,
+                "available_stocks": [],
+                "message": f"An error occurred: {str(e)}",
+            },
+        )
 
 @inject
 def buy_stock(

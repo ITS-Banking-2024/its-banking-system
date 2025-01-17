@@ -1,17 +1,15 @@
 from typing import List
 from uuid import UUID
 
-from dependency_injector.wiring import Provide, inject
-from django.db import transaction
-from marshmallow import ValidationError
 import yfinance as yf
+from dependency_injector.wiring import Provide, inject
+from django.utils.timezone import now
+from django.db import transaction
+from datetime import timedelta
+from marshmallow import ValidationError
 
 from core.services import ITradingService
 from stock_trading.models import Stock, StockOwnership
-from accounts.models import CheckingAccount, CustodyAccount
-from django.apps import apps
-
-from stock_trading.settings import CUSTODY_ACCOUNT_MODEL
 
 
 def fetch_stock_price(stock_symbol: str) -> float:
@@ -43,8 +41,7 @@ class TradingService(ITradingService):
 
         ownerships = StockOwnership.objects.filter(account=account)
         if not ownerships:
-            print(f"No stocks in ownership of account: {account_id} found.")
-
+            return []
         portfolio = [
             {
                 "id": str(ownership.stock.stockID),
@@ -124,11 +121,11 @@ class TradingService(ITradingService):
                 total_cost = stock_price * quantity
 
                 # Fetch user's account
-                custody_account = CustodyAccount.objects.filter(account_id=account_id).first()
+                custody_account = self.account_service.get_account(account_id)
                 if not custody_account:
                     raise ValidationError(f"Account {str(account_id)} not found.")
 
-                checking_account = CheckingAccount.objects.filter(account_id=custody_account.reference_account_id).first()
+                checking_account = self.account_service.get_account(custody_account.reference_account_id)
                 if not checking_account:
                     raise ValidationError(f"Account {str(account_id)} not found.")
 
@@ -172,7 +169,7 @@ class TradingService(ITradingService):
             with transaction.atomic():
                 # Fetch stock details
                 stock = Stock.objects.get(pk=stock_id)
-                stock_price = fetch_stock_price(stock.symbol)
+                stock_price = self.get_current_stock_price(stock.symbol)
                 total_revenue = stock_price * quantity
 
                 # Fetch stock ownership
@@ -220,6 +217,24 @@ class TradingService(ITradingService):
             raise ValidationError(f"Stock sale failed: {str(e)}")
 
     def get_current_stock_price(self, stock_symbol: str) -> float:
-        current_stock_price = fetch_stock_price(stock_symbol)
-        #TODO: update the database to new price
-        return float(fetch_stock_price(stock_symbol))
+        try:
+            # Fetch the stock object using `select_for_update` to lock the row for updates
+            with transaction.atomic():
+                stock = Stock.objects.select_for_update().filter(symbol=stock_symbol).first()
+                if not stock:
+                    raise ValidationError(f"Stock with symbol {stock_symbol} does not exist.")
+
+                # Check if the `last_updated` is older than 1 minute
+                if not stock.last_updated or (now() - stock.last_updated) > timedelta(minutes=1):
+                    # Fetch the latest stock price
+                    current_stock_price = fetch_stock_price(stock_symbol)
+
+                    # Update the stock's current price and `last_updated` timestamp
+                    stock.current_price = current_stock_price
+                    stock.last_updated = now()
+                    stock.save(update_fields=["current_price", "last_updated"])
+
+                # Return the (possibly updated) current stock price
+                return float(stock.current_price)
+        except Exception as e:
+            raise ValidationError(f"Failed to fetch and update stock price for {stock_symbol}: {str(e)}")

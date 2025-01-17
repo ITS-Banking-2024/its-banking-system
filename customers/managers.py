@@ -1,14 +1,15 @@
-from typing import Optional, Union
-from django.contrib.auth.base_user import BaseUserManager
-from django.db import transaction, IntegrityError
-import yfinance as yf
+import logging
 import random
+from typing import Optional, Union
+
+import yfinance as yf
 from django.apps import apps
+from django.contrib.auth.base_user import BaseUserManager
+from django.db import transaction
 from django.db.models import QuerySet
 
 from core.models import Customer
 from customers.settings import CHECKING_ACCOUNT_MODEL, CUSTODY_ACCOUNT_MODEL, STOCK_MODEL, STOCK_OWNERSHIP_MODEL
-import logging
 
 logger = logging.getLogger(__name__)
 
