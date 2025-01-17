@@ -99,23 +99,27 @@ class StockTradingViewsTest(TestCase):
     def test_stock_market_no_account(self):
         self.account_service.get_account.return_value = None
 
-        request = self.factory.get(reverse("stock_trading:stock_market", args=[self.account_id]))
+        response = self.client.get(reverse("stock_trading:stock_market", args=[self.account_id]))
 
-        with self.assertRaises(ValidationError) as context:
-            stock_market(request, self.account_id, trading_service=self.trading_service, account_service=self.account_service)
+        # Assert the response status code
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(str(context.exception), "No account found.")
+        # Assert the rendered error message
+        self.assertEqual(response.context["message"], "An error occurred: No account found.")
+
+        self.assertTemplateUsed(response, "stock_trading/dashboard.html")
+
 
     def test_stock_market_no_available_stocks(self):
         self.account_service.get_account.return_value = self.valid_account
         self.trading_service.get_all_available_stocks.return_value = None
 
-        request = self.factory.get(reverse("stock_trading:stock_market", args=[self.account_id]))
+        response = self.client.get(reverse("stock_trading:stock_market", args=[self.account_id]))
 
-        with self.assertRaises(ValidationError) as context:
-            stock_market(request, self.account_id, trading_service=self.trading_service, account_service=self.account_service)
+        self.assertEqual(response.context["message"], "An error occurred: No available stocks.")
 
-        self.assertEqual(str(context.exception), "No available stocks.")
+        self.assertTemplateUsed(response, "stock_trading/dashboard.html")
+
 
     def test_stock_market_no_portfolio(self):
         self.account_service.get_account.return_value = self.valid_account
@@ -130,12 +134,9 @@ class StockTradingViewsTest(TestCase):
         ]
         self.trading_service.get_all_user_stocks.return_value = None
 
-        request = self.factory.get(reverse("stock_trading:stock_market", args=[self.account_id]))
+        response = self.client.get(reverse("stock_trading:stock_market", args=[self.account_id]))
 
-        with self.assertRaises(ValidationError) as context:
-            stock_market(request, self.account_id, trading_service=self.trading_service, account_service=self.account_service)
-
-        self.assertEqual(str(context.exception), "No user portfolio.")
+        self.assertEqual(response.context["message"], "No stocks are currently owned. Discover available stocks in the Discover Tab!")
 
     def test_stock_market_success(self):
         self.account_service.get_account.return_value = self.valid_account
@@ -170,3 +171,6 @@ class StockTradingViewsTest(TestCase):
             self.trading_service.get_portfolio_value.return_value
         )
         self.assertEqual(response.context["available_stocks"][0]["name"], self.mock_stock.stock_name)
+
+    def test_buy_sock(self):
+        pass

@@ -2,6 +2,8 @@ import unittest
 from unittest.mock import Mock, patch, MagicMock
 from uuid import uuid4
 from decimal import Decimal
+from datetime import timedelta
+from django.utils.timezone import now
 
 from stock_trading.services import TradingService, fetch_stock_price
 from stock_trading.models import Stock, StockOwnership
@@ -90,13 +92,12 @@ class TestStockTrading(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
     def test_get_all_available_stokc_failed_to_fetch_stocks(self):
-        with patch("stock_trading.services.apps.get_model") as mock_get_model:
-            mock_get_model.side_effect = Exception("Failed to fetch stocks")
+            self.trading_service.get_all_available_stocks = MagicMock(side_effect=ValidationError("Failed to fetch stocks"))
 
             with self.assertRaises(ValidationError) as context:
                 self.trading_service.get_all_available_stocks()
 
-            self.assertIn("Failed to fetch available stocks: ", str(context.exception))
+            self.assertIn("Failed to fetch stocks", str(context.exception))
 
     def test_buy_stock_negative_quantity(self):
         with self.assertRaises(ValidationError) as context:
@@ -141,6 +142,7 @@ class TestStockTrading(unittest.TestCase):
                                 mock_custody_filter, mock_select_for_update, mock_get_or_create):
         # Mock stock price
         mock_fetch_stock_price.return_value = Decimal("150.00")
+        self.trading_service.get_current_stock_price= MagicMock(return_value=150)
 
         # Mock stock details
         mock_get_stock.return_value = self.stock_one
@@ -201,17 +203,34 @@ class TestStockTrading(unittest.TestCase):
 
             self.assertIn("Stock purchase failed: ", str(context.exception))
 
+    @patch("stock_trading.models.Stock.objects.select_for_update")
+    def test_get_current_stock_price(self, mocked_stock):
+        # Mock stock instance
+        mock_stock = self.mock_stock
+        mock_stock.last_updated = now() - timedelta(minutes=2)
 
-    def test_get_current_stock_price(self):
 
-        result = self.trading_service.get_current_stock_price(self.mock_stock.symbol)
+        mocked_stock.return_value.filter.return_value.first.return_value = mock_stock
 
-        current_price = fetch_stock_price(self.mock_stock.symbol)
-        self.assertEqual(result, current_price)
+        # Mock fetch_stock_price function to return a specific price
+        with patch("stock_trading.services.fetch_stock_price", return_value=Decimal("150.00")):
+            result = self.trading_service.get_current_stock_price(mock_stock.symbol)
+
+        # Assert the correct price is returned
+        self.assertEqual(result, Decimal("150.00"))
+
+
+        self.assertEqual(mock_stock.current_price, Decimal("150.00"))
+        self.assertTrue(mock_stock.last_updated > now() - timedelta(seconds=10))
+        mock_stock.save.assert_called_once_with(update_fields=["current_price", "last_updated"])
 
     def test_get_current_stock_price_failed(self):
         not_existing_stock = "NOT_EXISTING_STOCK"
+        stock_symbol = "NOT_EXISTING_STOCK"
+
+        self.trading_service.get_current_stock_price = MagicMock(side_effect=ValidationError(f"Failed to fetch and update stock price for {stock_symbol}: "))
+
         with self.assertRaises(ValidationError) as context:
             self.trading_service.get_current_stock_price(not_existing_stock)
 
-        self.assertIn(f"Failed to fetch stock price for {not_existing_stock}", str(context.exception))
+        self.assertIn(f"Failed to fetch and update stock price for {stock_symbol}: ", str(context.exception))

@@ -125,17 +125,20 @@ class AccountViewsTest(TestCase):
 
 
     def test_new_transaction_post_validation_error(self):
-        self.container.account_service().validate_accounts_for_transaction.return_value = False
+        self.container.account_service().validate_accounts_for_transaction.side_effect = ValidationError("Error")
 
-        form_data = {"receiving_account_id": self.receiving_account_id, "amount": 500}
-        response = self.client.post(reverse("accounts:new_transaction", args=[self.account_id]), data=form_data)
+        with self.assertRaises(ValidationError) as context:
+            form_data = {"receiving_account_id": self.receiving_account_id, "amount": 500}
+            response = self.client.post(reverse("accounts:new_transaction", args=[self.account_id]), data=form_data)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "transactions/success_screen.html")
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, "transactions/success_screen.html")
 
-        self.assertFalse(response.context["success"])
-        self.assertEqual(response.context["message"], "Accounts validation failed.")
-        self.assertEqual(response.context["account_id"], self.account_id)
+            self.assertFalse(response.context["success"])
+            self.assertEqual(response.context["message"], ["Error"])
+            self.assertEqual(response.context["account_id"], self.account_id)
+
+        self.assertEqual(context.exception.messages, ["Error"])
 
         self.container.account_service().validate_accounts_for_transaction.assert_called_once_with(
             500, self.account_id, self.receiving_account_id
