@@ -85,9 +85,6 @@ class DashboardTests(TestCase):
             # Simulate a GET request
             response = self.client.get(reverse("customers:dashboard"))
 
-            # Debugging step: print context
-            print("Response context:", response.context)
-
             # Verify status code and template
             self.assertEqual(response.status_code, 200)
             self.assertTemplateUsed(response, "customers/dashboard.html")
@@ -108,3 +105,31 @@ class DashboardTests(TestCase):
             self.assertEqual(context_accounts[1]["type"], self.mock_account_list[1]["type"])
             self.assertEqual(context_accounts[1]["balance"], self.mock_account_list[1]["balance"])
             self.assertEqual(context_accounts[1]["customer_id"], self.mock_account_list[1]["customer_id"])
+
+    def test_login(self):
+        # Simulate a POST request to the login view
+        response = self.client.post(reverse("customers:customers_login"), data={"username": "testuser", "password": "testpassword"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "customers/customers_login.html")
+
+
+    def test_login_failed(self):
+        # Simulate a POST request to the login view with invalid credentials
+        response = self.client.post(reverse("customers:customers_login"), data={"username": "testuser", "password": "wrongpassword"})
+
+        # Assert that the response is 200
+        self.assertEqual(response.status_code, 200)
+
+        # Assert that the login failed message is displayed
+        self.assertContains(response, "Invalid username or password.")
+
+    def test_customer_logout(self):
+        # Simulate a POST request to the logout view
+        response = self.client.post(reverse("customers:customers_logout"))
+
+        # Assert that the response is 302 -> redirecting to login
+        self.assertEqual(response.status_code, 302)
+
+        # Assert that the redirect location is the login page
+        self.assertRedirects(response, reverse("customers:customers_login"))
