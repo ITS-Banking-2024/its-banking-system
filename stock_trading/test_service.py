@@ -225,6 +225,7 @@ class TestStockTrading(unittest.TestCase):
         mock_stock.save.assert_called_once_with(update_fields=["current_price", "last_updated"])
 
     def test_get_current_stock_price_failed(self):
+        # Create non existing stock
         not_existing_stock = "NOT_EXISTING_STOCK"
         stock_symbol = "NOT_EXISTING_STOCK"
 

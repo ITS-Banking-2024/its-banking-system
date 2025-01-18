@@ -85,6 +85,7 @@ class TestCustomerService(TestCase):
 
     @patch("customers.services.Customer.objects.get")
     def test_get_customer_accounts_with_multiple_accounts(self, mock_get):
+        # Mock customers
         mock_customer = Mock()
         mock_customer.id = 1
         mock_customer.username = "test_user"
@@ -96,8 +97,10 @@ class TestCustomerService(TestCase):
 
         self.account_service.get_accounts_by_customer_id.return_value = [mock_account_one, mock_account_two]
 
+        # Call the method
         result = self.customer_service.get_customer_accounts(1)
 
+        # Assertions
         self.assertEqual(result, [mock_account_one, mock_account_two])
 
         self.account_service.get_accounts_by_customer_id.assert_called_once_with(1)
