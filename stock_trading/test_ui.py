@@ -1,10 +1,12 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 from dependency_injector import containers, providers
 from django.urls import reverse
 from django.test import TestCase, RequestFactory
 from marshmallow.exceptions import ValidationError
+from django.http import Http404
 from uuid import uuid4
 from decimal import Decimal
+from stock_trading.views import history
 
 from core.services import ITradingService, IAccountService
 from core.models import Account
@@ -172,5 +174,179 @@ class StockTradingViewsTest(TestCase):
         )
         self.assertEqual(response.context["available_stocks"][0]["name"], self.mock_stock.stock_name)
 
-    def test_buy_sock(self):
-        pass
+    def test_buy_stock_get_request(self):
+        response = self.client.get(reverse("stock_trading:buy_stock", args=[self.account_id, self.stock_id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "stock_trading/buy_stock.html")
+        self.assertIn("form", response.context)
+        self.assertEqual(response.context["account_id"], self.account_id)
+
+    def test_buy_stock_post_invalid_form(self):
+        form_data = {"stock": "", "quantity": "invalid"}
+
+        with patch("stock_trading.views.BuyStockForm.is_valid", return_value=False):
+            response = self.client.post(reverse("stock_trading:buy_stock", args=[self.account_id, self.stock_id]), data=form_data)
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, "stock_trading/buy_stock.html")
+            self.assertIn("form", response.context)
+            self.assertFalse(response.context["form"].is_valid())
+            self.container.trading_service().buy_stock.assert_not_called()
+
+    @patch("stock_trading.models.StockOwnership.objects.get_or_create")
+    @patch("accounts.models.CheckingAccount.objects.filter")
+    @patch("stock_trading.services.fetch_stock_price")
+    @patch("stock_trading.models.Stock.objects.get")
+    @patch("stock_trading.views.BuyStockForm")
+    def test_buy_stocks_with_valid_form(self, mock_buy_stock_form, mock_stock_get, mock_fetch_stock_price, mock_account_filter, mock_get_or_create):
+
+        mock_trading_service = self.trading_service
+
+        # Mock the stock object
+        mock_stock = self.mock_stock
+        mock_stock_get.return_value = mock_stock
+
+        # Mock the stock price
+        mock_fetch_stock_price.return_value = Decimal("150.00")
+
+        # Mock account
+        mock_account = self.valid_account
+        mock_account_filter.return_value.first.return_value = mock_account
+
+        # Mock stock ownership
+        mock_ownership = self.mock_ownership
+        mock_get_or_create.return_value = (mock_ownership, True)
+
+        # Mock form behavior
+        mock_form_instance = MagicMock()
+        mock_form_instance.is_valid.return_value = True
+        mock_form_instance.cleaned_data = {
+            "stock": mock_stock,
+            "quantity": 5,
+        }
+        mock_buy_stock_form.return_value = mock_form_instance
+
+        # POST request
+        response = self.client.post(
+            reverse("stock_trading:buy_stock", args=[self.account_id, self.stock_id]),
+            data={"stock": str(mock_stock.id), "quantity": 5},
+        )
+
+        # Assertions
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "stock_trading/success_screen.html")
+        mock_trading_service.buy_stock.assert_called_once_with(self.account_id, self.stock_id, 5)
+
+    def test_buy_stock_validation_error(self):
+        pass # i don't know how to test this i tried many different options but it didn't work
+
+    def test_sell_stock_get_request(self):
+        response = self.client.get(reverse("stock_trading:sell_stock", args=[self.account_id, self.stock_id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "stock_trading/sell_stock.html")
+        self.assertIn("form", response.context)
+        self.assertEqual(response.context["account_id"], self.account_id)
+
+    def test_sell_stock_post_invalid_form(self):
+        form_data = {"stock": "", "quantity": "invalid"}
+
+        with patch("stock_trading.views.SellStockForm.is_valid", return_value=False):
+            response = self.client.post(reverse("stock_trading:sell_stock", args=[self.account_id, self.stock_id]), data=form_data)
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, "stock_trading/sell_stock.html")
+            self.assertIn("form", response.context)
+            self.assertFalse(response.context["form"].is_valid())
+            self.container.trading_service().sell_stock.assert_not_called()
+
+    @patch("stock_trading.models.StockOwnership.objects.get")
+    @patch("accounts.models.CheckingAccount.objects.filter")
+    @patch("stock_trading.services.fetch_stock_price")
+    @patch("stock_trading.models.Stock.objects.get")
+    @patch("stock_trading.views.SellStockForm")
+    def test_sell_stock_valid_form(self, mock_sell_stock_form, mock_stock_get, mock_fetch_stock_price, mock_account_filter, mock_get):
+
+        mock_trading_service = self.trading_service
+
+        # Mock the stock object
+        mock_stock = self.mock_stock
+        mock_stock_get.return_value = mock_stock
+
+        # Mock the stock price
+        mock_fetch_stock_price.return_value = Decimal("150.00")
+
+        # Mock account
+        mock_account = self.valid_account
+        mock_account_filter.return_value.first.return_value = mock_account
+
+        # Mock stock ownership
+        mock_ownership = self.mock_ownership
+        mock_get.return_value = mock_ownership
+
+        # Mock form behavior
+        mock_form_instance = MagicMock()
+        mock_form_instance.is_valid.return_value = True
+        mock_form_instance.cleaned_data = {
+            "stock": mock_stock,
+            "quantity": 5,
+        }
+        mock_sell_stock_form.return_value = mock_form_instance
+
+        # POST request
+        response = self.client.post(
+            reverse("stock_trading:sell_stock", args=[self.account_id, self.stock_id]),
+            data={"stock": str(mock_stock.id), "quantity": 5},
+        )
+
+        # Assertions
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "stock_trading/success_screen.html")
+        mock_trading_service.sell_stock.assert_called_once_with(self.account_id, self.stock_id, 5)
+
+    def test_sell_stock_validation_error(self):
+        pass # the same as with buy stock validation error -> i have difficulties with accesing it and testing it
+
+    def test_history_account_not_found(self):
+        self.account_service.get_account.return_value = None
+
+        response = self.client.get(reverse("stock_trading:history", args=[self.account_id]))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.context["exception"], "Account not found.")
+
+    @patch("core.services.ITradingService")
+    @patch("core.services.ITransactionService")
+    @patch("core.services.IAccountService")
+    def test_history_view_successful(self, mock_account_service, mock_transaction_service, mock_trading_service):
+
+        # I didn't figure out the way to test it with to see the contex so i only managed to do this
+
+        # Mock request
+        request = RequestFactory().get("/history", {"timeframe": "30_days"})
+        account_id = "123e4567-e89b-12d3-a456-426614174000"  # A valid UUID string
+
+        # Mock account
+        mock_account = Mock()
+        mock_account.reference_account_id = 100
+        mock_account.account_id = account_id  # Ensure it matches the URL pattern
+        mock_account_service.get_account.return_value = mock_account
+
+        # Mock stock transaction history
+        mock_transaction_service.get_stock_transaction_history.return_value = [
+            {"stock_id": 1, "amount": 100},
+            {"stock_id": 2, "amount": 200},
+        ]
+
+        # Mock trading service stock symbols
+        mock_stock_1 = Mock(symbol="AAPL")
+        mock_stock_2 = Mock(symbol="GOOG")
+        mock_trading_service.get_stock.side_effect = [mock_stock_1, mock_stock_2]
+
+        # Call the view
+        response = history(
+            request,
+            account_id,
+            trading_service=mock_trading_service,
+            transaction_service=mock_transaction_service,
+            account_service=mock_account_service,
+        )
+
+        self.assertEqual(response.status_code, 200)
