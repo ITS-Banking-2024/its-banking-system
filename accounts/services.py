@@ -119,8 +119,13 @@ class AccountService(IAccountService):
         if account.PIN != pin:
             raise ValidationError("Invalid PIN.")
 
-        if amount < 0 and abs(amount) > self.get_balance(account_id):
-            raise ValidationError("Insufficient balance for withdrawal.")
+        overdraft_limit = 1000.00  # Overdraft limit in float
+
+        # Calculate the current balance of the sending account
+        current_balance = self.get_balance(account_id)
+
+        if current_balance - amount + overdraft_limit < 0:
+            raise ValidationError(f"Overdraft limit ({overdraft_limit}) overreached")
 
         return True
 

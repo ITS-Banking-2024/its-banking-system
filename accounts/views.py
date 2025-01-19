@@ -1,13 +1,13 @@
 import uuid
 
 from dependency_injector.wiring import inject, Provide
-from django.http import Http404, JsonResponse
+from django.http import Http404
 from django.http import HttpRequest
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 from marshmallow import ValidationError
 
 from accounts.forms import TransactionForm, SavingsTransactionForm
-from accounts.models import CheckingAccount, SavingsAccount, CustodyAccount
 from core.services import ITransactionService, IAccountService
 
 
@@ -58,6 +58,7 @@ def new_transaction(request: HttpRequest, account_id, transaction_service: ITran
     return render(request, "accounts/new_transaction.html", {"form": form, "account_id": account_id})
 
 @inject
+@csrf_exempt
 def new_atm_transaction(
     request: HttpRequest,
     account_id,
