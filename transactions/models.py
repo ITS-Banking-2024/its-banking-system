@@ -49,7 +49,7 @@ class ATMTransaction(Transaction):
     atmId = models.UUIDField(
         default=uuid.uuid4,
         editable=False,
-        unique=True
+        unique=False
     )
 
     class Meta:

@@ -552,6 +552,67 @@ class TestAccountService(unittest.TestCase):
         # Verify get_account was called once with the correct account_id
         self.account_service.get_account.assert_called_once_with(valid_savings_account.account_id)
 
+    def test_validate_account_for_atm_no_account(self):
+
+        # Mock that account_sercice.get_account returns None
+        self.account_service.get_account = Mock(return_value=None)
+
+        with self.assertRaises(ValidationError) as context:
+            self.account_service.validate_account_for_atm(10, uuid4(), 20)
+
+        self.assertEqual(str(context.exception), "Account not found.")
+
+
+    def test_validate_account_for_atm_invalid_pin(self):
+
+        mock_account = self.account_one
+        mock_account.PIN = "1234"
+
+        self.account_service.get_account = Mock(return_value=mock_account)
+
+
+        with self.assertRaises(ValidationError) as context:
+            self.account_service.validate_account_for_atm(10, mock_account.account_id, "2012")
+
+        self.assertEqual(str(context.exception), "Invalid PIN.")
+
+    def test_validate_account_for_atm_not_checking_account(self):
+
+        mock_account = self.account_two
+        mock_account.PIN = "1234"
+
+        self.account_service.get_account = Mock(return_value=mock_account)
+
+        with self.assertRaises(ValidationError) as context:
+            self.account_service.validate_account_for_atm(10, mock_account.account_id, "1234")
+
+        self.assertEqual(str(context.exception), f"ATM transactions are allowed only for checking accounts.")
+
+
+    def test_validate_account_for_atm_overdraft_limit(self):
+
+        mock_account = self.account_one
+        mock_account.PIN = "1234"
+
+        self.account_service.get_account = Mock(return_value=mock_account)
+        self.account_service.get_balance = Mock(return_value=-1000.0)
+
+        with self.assertRaises(ValidationError) as context:
+            self.account_service.validate_account_for_atm(2000, mock_account.account_id, "1234")
+
+        self.assertEqual(str(context.exception), "Overdraft limit (1000.0) overreached")
+
+    def test_validate_account_for_atm_success(self):
+
+        mock_account = self.account_one
+        mock_account.PIN = "1234"
+
+        self.account_service.get_account = Mock(return_value=mock_account)
+        self.account_service.get_balance = Mock(return_value=1000.0)
+
+        result = self.account_service.validate_account_for_atm(200, mock_account.account_id, "1234")
+
+        self.assertTrue(result)
 
     def tearDown(self):
         patch.stopall()

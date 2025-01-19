@@ -114,8 +114,13 @@ class AccountService(IAccountService):
             if not account:
                 raise ValidationError("Account not found.")
 
+<<<<<<< HEAD
             if not isinstance(account, CheckingAccount):
                 raise ValidationError("ATM transactions are allowed only for checking accounts.")
+=======
+        if (account.type != "checking"):
+            raise ValidationError(f"ATM transactions are allowed only for checking accounts.")
+>>>>>>> e9e641caea92e3453fb08f95c25305f5da9b51a6
 
             if account.PIN != pin:
                 raise ValidationError("Invalid PIN.")

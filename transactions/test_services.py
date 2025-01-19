@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 from django.core.exceptions import ValidationError
 from transactions.services import TransactionService
-from transactions.models import Transaction, StockTransaction
+from transactions.models import Transaction, StockTransaction, ATMTransaction
 
 class TestTransactionService(unittest.TestCase):
     def setUp(self):
@@ -14,6 +14,7 @@ class TestTransactionService(unittest.TestCase):
         # Patch Transaction and StockTransaction models
         self.mock_transaction_model = patch('transactions.models.Transaction').start()
         self.mock_stock_transaction_model = patch('transactions.models.StockTransaction').start()
+        self.mock_atm_transaction_model = patch('transactions.models.ATMTransaction').start()
 
         # Mock sending and receiving accounts
         self.sending_account_id = uuid4()
@@ -95,6 +96,17 @@ class TestTransactionService(unittest.TestCase):
             sending_account_id=self.second_account_id,
             receiving_account_id=self.stock_receiving_account_id,
         )
+
+        # Account for the transaction
+        self.mock_atm_sending_account_id = uuid4()
+
+        self.mock_atm_transaction=Mock()
+        self.mock_atm_transaction.sending_account_id = self.mock_atm_sending_account_id
+        self.mock_atm_transaction.amount = 100.0
+        self.mock_atm_transaction.atmId = uuid4()
+
+        self.mock_atm_transaction_model.objects.create.return_value = self.mock_atm_transaction
+
 
 
     def test_create_new_transaction_success(self):
@@ -232,6 +244,29 @@ class TestTransactionService(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.transaction_service.get_stock_transaction_history(account_id=self.second_account_id, timeframe="invalid_timeframe")
 
+
+    def test_new_atm_transaction_success(self):
+
+        result = self.transaction_service.create_new_atm_transaction(
+            amount=100.0,
+            account_id=self.mock_atm_transaction.sending_account_id,
+            atm_id=uuid4())
+
+        self.assertTrue(result)
+        self.assertEqual(self.mock_atm_transaction.amount, 100.0)
+        self.assertEqual(self.mock_atm_transaction.sending_account_id, self.mock_atm_transaction.sending_account_id)
+
+    def test_new_atm_transaction_failure(self):
+        self.transaction_service.create_new_atm_transaction = Mock(side_effect=ValidationError("Atm transaction failed"))
+
+        with self.assertRaises(ValidationError) as context:
+            self.transaction_service.create_new_atm_transaction(
+                amount=100.0,
+                account_id=self.mock_atm_transaction.sending_account_id,
+                atm_id=uuid4()
+            )
+
+        self.assertEqual(str(context.exception), "['Atm transaction failed']")
 
     def tearDown(self):
         patch.stopall()
