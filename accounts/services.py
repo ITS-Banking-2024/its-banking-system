@@ -82,7 +82,8 @@ class AccountService(IAccountService):
         return {"total_sent": total_sent, "total_received": total_received}
 
     def validate_accounts_for_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
-        with transaction.atomic():# Validate sending account
+        with transaction.atomic():
+            # Validate sending account
             sending_account = self.get_account(sending_account_id)
             if not sending_account:
                 raise ValidationError(f"Sending account with ID {sending_account_id} does not exist.")
