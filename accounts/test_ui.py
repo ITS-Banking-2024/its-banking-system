@@ -61,9 +61,14 @@ class AccountViewsTest(TestCase):
         self.mock_totals = {"total_received": 0, "total_sent": 0}
         c.account_service().get_account_totals.return_value = self.mock_totals
 
+        self.container = c
+
+        self.container.account_service().validate_account_for_atm.return_value = True
+        self.container.transaction_service().create_new_atm_transaction.return_value = None
+
         c.wire(modules=["accounts.views"])
 
-        self.container = c
+
 
     def test_account_detail_success(self):
         response = self.client.get(reverse("accounts:account_detail", args=[self.account_id]))
@@ -242,3 +247,36 @@ class AccountViewsTest(TestCase):
             # Ensure the service methods were not called
             self.container.account_service().deposit_savings.assert_not_called()
             self.container.account_service().withdraw_savings.assert_not_called()
+
+    def test_new_atm_transaction_get_request(self):
+        response = self.client.get(reverse("accounts:new_transaction", args=[self.account_id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "accounts/new_transaction.html")
+        self.assertIn("form", response.context)
+        self.assertEqual(response.context["account_id"], self.account_id)
+
+
+    def test_new_atm_transaction_post_validation_error(self):
+        self.container.account_service().validate_account_for_atm.side_effect = ValidationError("Error")
+        form_data = {"amount": 500}
+        response = self.client.post(reverse("accounts:new_atm_transaction", args=[self.account_id]), data=form_data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "transactions/atm_success_screen.html")
+
+        self.assertFalse(response.context["success"])
+        self.assertEqual(response.context["message"], "An unexpected error occurred: ['Error']")
+        self.assertEqual(response.context["account_id"], self.account_id)
+
+    def test_new_atm_transaction_post_success(self):
+        form_data = {"amount": 500}
+        response = self.client.post(reverse("accounts:new_atm_transaction", args=[self.account_id]), data=form_data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "transactions/atm_success_screen.html")
+
+        self.assertTrue(response.context["success"])
+        self.assertEqual(response.context["message"], "Transaction of 500.0 EUR successful!")
+        self.assertEqual(response.context["account_id"], self.account_id)
+
