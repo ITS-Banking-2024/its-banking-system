@@ -1,6 +1,7 @@
 import uuid
 
 from dependency_injector.wiring import inject, Provide
+from django.db import transaction
 from django.http import Http404
 from django.http import HttpRequest
 from django.shortcuts import render
@@ -33,10 +34,10 @@ def new_transaction(request: HttpRequest, account_id, transaction_service: ITran
                 sending_account_id = account_id
                 receiving_account_id = form.cleaned_data["receiving_account_id"]
                 amount = form.cleaned_data["amount"]
-
-                account_service.validate_accounts_for_transaction(amount, sending_account_id, receiving_account_id)
-                # Use the service to create the transaction
-                transaction_service.create_new_transaction(amount, sending_account_id, receiving_account_id)
+                with transaction.atomic():
+                    account_service.validate_accounts_for_transaction(amount, sending_account_id, receiving_account_id)
+                    # Use the service to create the transaction
+                    transaction_service.create_new_transaction(amount, sending_account_id, receiving_account_id)
                 success = True
 
             except ValidationError as e:

@@ -82,50 +82,51 @@ class AccountService(IAccountService):
         return {"total_sent": total_sent, "total_received": total_received}
 
     def validate_accounts_for_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID) -> bool:
-        # Validate sending account
-        sending_account = self.get_account(sending_account_id)
-        if not sending_account:
-            raise ValidationError(f"Sending account with ID {sending_account_id} does not exist.")
+        with transaction.atomic():# Validate sending account
+            sending_account = self.get_account(sending_account_id)
+            if not sending_account:
+                raise ValidationError(f"Sending account with ID {sending_account_id} does not exist.")
 
-        # Validate receiving account
-        receiving_account = self.get_account(receiving_account_id)
-        if not receiving_account:
-            raise ValidationError(f"Receiving account with ID {receiving_account_id} does not exist.")
+            # Validate receiving account
+            receiving_account = self.get_account(receiving_account_id)
+            if not receiving_account:
+                raise ValidationError(f"Receiving account with ID {receiving_account_id} does not exist.")
 
-        # Validate the transaction amount
-        amount = float(amount)
-        if amount <= 0:
-            raise ValidationError("Transaction amount must be greater than zero.")
+            # Validate the transaction amount
+            amount = float(amount)
+            if amount <= 0:
+                raise ValidationError("Transaction amount must be greater than zero.")
 
-        overdraft_limit = 1000.00  # Overdraft limit in float
+            overdraft_limit = 1000.00  # Overdraft limit in float
 
-        # Calculate the current balance of the sending account
-        current_balance = self.get_balance(sending_account_id)
+            # Calculate the current balance of the sending account
+            current_balance = self.get_balance(sending_account_id)
 
-        # Check if the transaction exceeds the overdraft limit
-        if current_balance - amount + overdraft_limit < 0:
-            raise ValidationError(f"Overdraft limit ({overdraft_limit}) overreached")
+            # Check if the transaction exceeds the overdraft limit
+            if current_balance - amount + overdraft_limit < 0:
+                raise ValidationError(f"Overdraft limit ({overdraft_limit}) overreached")
 
         return True
 
     def validate_account_for_atm(self, amount: float, account_id: UUID, pin: str) -> bool:
-        account = self.get_account(account_id)
-        if not account:
-            raise ValidationError("Account not found.")
+        with transaction.atomic():
+            account = self.get_account(account_id)
+            if not account:
+                raise ValidationError("Account not found.")
 
-        if not isinstance(account, CheckingAccount):
-            raise ValidationError("ATM transactions are allowed only for checking accounts.")
+            if not isinstance(account, CheckingAccount):
+                raise ValidationError("ATM transactions are allowed only for checking accounts.")
 
-        if account.PIN != pin:
-            raise ValidationError("Invalid PIN.")
+            if account.PIN != pin:
+                raise ValidationError("Invalid PIN.")
 
-        overdraft_limit = 1000.00  # Overdraft limit in float
+            overdraft_limit = 1000.00  # Overdraft limit in float
 
-        # Calculate the current balance of the sending account
-        current_balance = self.get_balance(account_id)
+            # Calculate the current balance of the sending account
+            current_balance = self.get_balance(account_id)
 
-        if current_balance - amount + overdraft_limit < 0:
-            raise ValidationError(f"Overdraft limit ({overdraft_limit}) overreached")
+            if current_balance - amount + overdraft_limit < 0:
+                raise ValidationError(f"Overdraft limit ({overdraft_limit}) overreached")
 
         return True
 
