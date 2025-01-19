@@ -85,6 +85,10 @@ class IAccountService(ABC):
         pass
 
     @abstractmethod
+    def validate_account_for_atm(self, amount: float, account_id: UUID, pin: str) -> bool:
+        pass
+
+    @abstractmethod
     def deposit_savings(self, account_id: UUID, amount: float):
         pass
 
@@ -123,6 +127,10 @@ class ITransactionService(ABC):
 
     @abstractmethod
     def create_new_stock_transaction(self, amount: float, sending_account_id: UUID, receiving_account_id: UUID, stock_id: UUID, quantity: int, transaction_type: str) -> bool:
+        pass
+
+    @abstractmethod
+    def create_new_atm_transaction(self, amount: float, account_id: UUID, atm_id: UUID) -> bool:
         pass
 
     @abstractmethod

@@ -108,6 +108,22 @@ class AccountService(IAccountService):
 
         return True
 
+    def validate_account_for_atm(self, amount: float, account_id: UUID, pin: str) -> bool:
+        account = self.get_account(account_id)
+        if not account:
+            raise ValidationError("Account not found.")
+
+        if not isinstance(account, CheckingAccount):
+            raise ValidationError("ATM transactions are allowed only for checking accounts.")
+
+        if account.PIN != pin:
+            raise ValidationError("Invalid PIN.")
+
+        if amount < 0 and abs(amount) > self.get_balance(account_id):
+            raise ValidationError("Insufficient balance for withdrawal.")
+
+        return True
+
     def deposit_savings(self, account_id: UUID, amount: float):
         if amount <= 0:
             raise ValidationError("Deposit amount must be greater than zero.")

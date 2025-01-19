@@ -6,7 +6,7 @@ from django.db import transaction
 from marshmallow import ValidationError
 
 from core.services import ITransactionService
-from transactions.models import Transaction, StockTransaction
+from transactions.models import Transaction, StockTransaction, ATMTransaction
 
 
 class TransactionService(ITransactionService):
@@ -43,6 +43,23 @@ class TransactionService(ITransactionService):
             return True
         except Exception as e:
             raise ValidationError(f"Transaction failed: {str(e)}")
+
+    def create_new_atm_transaction(self, amount: float, account_id: UUID, atm_id: UUID) -> bool:
+        # Wrap the operation in a transaction for safety
+        try:
+            with transaction.atomic():
+                # Create the transaction record
+                atm_transaction_record = ATMTransaction.objects.create(
+                    sending_account_id=account_id,
+                    receiving_account_id=None,
+                    amount=amount,
+                    date=datetime.now(),
+                    atmId=atm_id
+                )
+            return True
+        except Exception as e:
+            raise ValidationError(f"Atm transaction failed: {str(e)}")
+
 
 
     def get_transaction_history(self, account_id: UUID, timeframe: str) -> List[dict]:
