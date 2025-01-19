@@ -32,6 +32,11 @@
     {% endif %}
 
     <a href="{% url 'customers:dashboard' %}" class="btn btn-secondary">Back to Customer Dashboard</a>
+    {% if account.type == 'checking' %}
+        <div>
+            <a href="{% url 'accounts:new_atm_transaction' account.account_id %}" class="btn btn-warning mt-5">Mock ATM</a>
+        </div>
+    {% endif %}
     {% else %}
     <p>
         Please <a href="{% url 'customers:customers_login' %}">log in</a>.

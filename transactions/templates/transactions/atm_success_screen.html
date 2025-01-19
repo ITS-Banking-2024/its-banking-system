@@ -1,0 +1,21 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    {% if success %}
+    <div class="alert alert-success text-center">
+        <h4>Success!</h4>
+        <p>{{ message }}</p>
+    </div>
+    {% else %}
+    <div class="alert alert-danger text-center">
+        <h4>Error!</h4>
+        <p>{{ message }}</p>
+    </div>
+    {% endif %}
+
+    <div class="text-center mt-3">
+        <a href="{% url 'accounts:account_detail' account_id=account_id %}" class="btn btn-secondary">Back to Account</a>
+    </div>
+</div>
+{% endblock %}

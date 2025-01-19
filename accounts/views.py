@@ -1,5 +1,7 @@
+import uuid
+
 from dependency_injector.wiring import inject, Provide
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.http import HttpRequest
 from django.shortcuts import render
 from marshmallow import ValidationError
@@ -55,6 +57,66 @@ def new_transaction(request: HttpRequest, account_id, transaction_service: ITran
 
     return render(request, "accounts/new_transaction.html", {"form": form, "account_id": account_id})
 
+@inject
+def new_atm_transaction(
+    request: HttpRequest,
+    account_id,
+    transaction_service: ITransactionService = Provide["transaction_service"],
+    account_service: IAccountService = Provide["account_service"],
+):
+    """
+    Handle ATM transactions, allowing withdrawals for checking accounts.
+    """
+    if request.method == "POST":
+        try:
+            # Extract form data
+            form_data = request.POST
+            pin = form_data.get("pin")
+            amount = float(form_data.get("amount"))
+
+            # Validate the account and PIN
+            account_service.validate_account_for_atm(amount=amount, account_id=account_id, pin=pin)
+
+            # Perform the ATM transaction
+            atm_id = uuid.uuid4()  # Simulate the ATM ID
+            transaction_service.create_new_atm_transaction(amount=amount, account_id=account_id, atm_id=atm_id)
+
+            # Render the success screen
+            return render(
+                request,
+                "transactions/atm_success_screen.html",
+                {
+                    "success": True,
+                    "message": f"Transaction of {amount} EUR successful!",
+                    "account_id": account_id,
+                },
+            )
+
+        except ValidationError as e:
+            # Render failure screen for validation errors
+            return render(
+                request,
+                "transactions/atm_success_screen.html",
+                {
+                    "success": False,
+                    "message": str(e),
+                    "account_id": account_id,
+                },
+            )
+        except Exception as e:
+            # Render failure screen for unexpected errors
+            return render(
+                request,
+                "transactions/atm_success_screen.html",
+                {
+                    "success": False,
+                    "message": f"An unexpected error occurred: {str(e)}",
+                    "account_id": account_id,
+                },
+            )
+    else:
+        # Render the ATM transaction form
+        return render(request, "transactions/atm_transaction_form.html", {"account_id": account_id})
 
 def success_screen(request: HttpRequest, success: bool, message: str, account_id):
     return render(request, 'transactions/success_screen.html', {
@@ -78,6 +140,9 @@ def history(
 
     # Fetch transaction history
     transaction_history = transaction_service.get_transaction_history(account_id, timeframe)
+    for transaction in transaction_history:
+        if transaction["receiving_account_id"] == "None":
+            transaction["receiving_account_id"] = "ATM Withdrawal"
 
     totals = account_service.get_account_totals(account_id, timeframe)
 
