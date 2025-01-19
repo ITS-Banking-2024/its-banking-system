@@ -1,3 +1,123 @@
+# ITS-BANK
+
+## Project Overview
+This project is a **Banking System** that includes key features such as:
+
+1. **Account Management**:
+   - Checking, Savings, and Custody account types with unique functionality.
+2. **Stock Trading**:
+   - Buy and sell stocks via a custody account.
+   - Real-time stock price updates using `yfinance`.
+3. **Transaction History**:
+   - View transaction history for all account types.
+4. **Web Interface**:
+   - User-friendly UI for customer actions like making transactions, viewing transaction history, savings deposit/withdrawal, stock market interactions, and ATM transactions.
+5**ATM Transactions**:
+   - Withdrawal support for Checking accounts via PIN-based authentication.
+
+## Features
+
+
+### 1. Stock Trading
+- Custody account holders can:
+  - Buy stocks based on available funds.
+  - Sell stocks they currently own.
+- Real-time stock prices are fetched using the `yfinance` API.
+- The stock market dashboard provides detailed portfolio information, including profit/loss calculations.
+
+### 2. Savings Transactions
+- Deposit and withdrawal functionality for Savings Accounts.
+- Reference accounts (linked Checking Accounts) are used for transactions.
+
+### 3. Transaction History
+- Users can view their transaction history filtered by timeframes (e.g., 30 days, 60 days, or all-time).
+- For transactions made via ATM, the history reflects "ATM withdrawal" for clarity.
+
+### 4. ATM Transactions
+- ATM transactions are restricted to **Checking Accounts**.
+- PIN authentication is required to authorize ATM transactions.
+- Users can withdraw or deposit money using the ATM interface.
+
+---
+
+## Testing the UI
+
+### **0. Customer creating and account opening (optional)**
+- Navigate to admin page by entering the URL:
+  ```
+  http://127.0.0.1:8000/admin/
+  ```
+- Default admin credentials:
+```
+ username: admin
+ password: admin
+```
+- Admin page is meant to be used by the bank officials on bank premises to add customers and open accounts
+
+### **1. Access Customer Dashboard & Account Details**
+- For testing the default user can be used:
+ ```
+ username: user1
+ password: user1   
+ ```
+- Navigate to the customer's dashboard page by entering the URL:
+  ```
+  http://127.0.0.1:8000/customers/dashboard/
+  ```
+- Actions available:
+  - Select which account you want to interact with.
+  - Open account details page by clicking on the specific account
+
+#### Checking Account
+- Actions available:
+  - View account details
+  - Create new transaction (test by sending preferred amount to an existing checking account of another customer: c9e76ebf-8702-48f1-bc6b-7262e8525196)
+  - View transaction history filtered by timeframes (e.g., 30 days, 60 days, or all-time).
+ 
+#### Savings Account
+- Actions available:
+  - View account details
+  - Deposit money from reference checking account to savings account
+  - Withdraw money from savings account to reference checking account
+
+#### Custody Account
+- Actions available:
+  - View account details
+  - Interact with the Stock Market
+  - View stock transaction history
+
+
+### **3. Stock Trading**
+#### Stock Market Dashboard
+- Features:
+  - View available stocks and their prices in the Discover Tab. Only the stocks that the bank offers are available for purchase. By the default the bank owns these 5 stocks ("AAPL", "MSFT", "GOOGL", "AMZN", "TSLA")
+  - Access the portfolio to check owned stocks, quantities, and total value.
+  - Buy and sell stocks.
+
+
+### **4. Mock ATM**
+- Navigate to the mock ATM transaction page using the Mock ATM button in the Checking Account details page or using the link:
+  ```
+  http://127.0.0.1:8000/accounts/64429150-1b19-41db-97e9-17a7bbe2d05f/atm_transaction/
+  ```
+- Features:
+  - Enter PIN and the desired transaction amount.
+  - Submit the transaction and view the success/failure screen.
+
+#### **Postman Request for Testing**
+- **Method**: `POST`
+- **URL**: `http://127.0.0.1:8000/accounts/64429150-1b19-41db-97e9-17a7bbe2d05f/atm_transaction/`
+- **Headers**:
+  - `Content-Type`: `application/json`
+- **Body (JSON)**:
+  ```json
+  {
+    "pin": "1234",
+    "amount": 100.0
+  }
+  ```
+
+
 # SWD Django Demo
 The project can be used as a reference for the SWD lab course.
 This project consists of several apps with a focus on loose coupling and dependency injection.
